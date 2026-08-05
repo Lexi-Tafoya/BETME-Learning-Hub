@@ -14,8 +14,13 @@ Do **not** save, reference, edit or route anything through the MasterFlow projec
 This work is unrelated to it.
 
 **Current working build:** `BETMR\TMR Learning Experience\`
-**Latest package:** `BETMR\TMR Learning Experience v3.1 LIVE.zip`
+**Latest package:** `BETMR\TMR Learning Experience v3.2 LIVE.zip`
 **Backups:** `BETMR\_backups\` — back up before any structural change.
+
+**GitHub:** https://github.com/Lexi-Tafoya/BETME-Learning-Hub — **public**, and the
+build folder *is* the repo root (it has its own `.git`). Commit and push from
+inside `TMR Learning Experience\`, not from `BETMR\`. This copy of HANDOFF.md is
+duplicated into the repo; update both, or move it in and delete this one.
 
 Continue from these files. **Do not rebuild the experience from scratch.**
 
@@ -43,7 +48,8 @@ Prints three links. Roles:
 
 | Route | Device | Notes |
 |---|---|---|
-| `/presenter?key=…` | Facilitator laptop | **The `?key=` is required.** Regenerated every server start; read it from the terminal. Without it, control actions 401 and phones never update. |
+| `/presenter` | Facilitator laptop | Opening it on the machine running the server claims the console via a cookie. **No key to paste** (v3.2). |
+| `/presenter?key=…` | Any other device | Still works, and also sets the cookie, so a later refresh without the query string stays in control. Needed on a hosted URL, where loopback auto-claim cannot apply. |
 | `/display` | Room screen | Clean. Notes/controls hidden. Mirrors the presenter. |
 | `/join` | Phones | One scan, whole session. Same Wi-Fi as the laptop. |
 
@@ -61,10 +67,14 @@ answers captured on the laptop. Keep this working; it is the fallback.
 | `style.css` | Component vocabulary: cards, options, charts, panels |
 | `live.js` | Live client. Role detection, SSE, auto-open, control actions, QR modal |
 | `join.html` / `join.js` | Participant phone app |
-| `server.js` | Session server: SSE, anonymous aggregation, routes, API |
-| `make-qr.py` | Generates a decode-verified join QR (`pip install qrcode`) |
+| `server.js` | Session server: SSE, anonymous aggregation, routes, API, facilitator access |
+| `qr.js` | Zero-dependency QR encoder. The server draws the join code itself |
+| `make-qr.py` | Print artwork only now: high-resolution QR and the join card |
+| `render.yaml` | One-click Render deploy from the repo |
+| `tools/verify-qr.py` | Proves `qr.js` against the reference encoder, then decodes it (120 checks) |
+| `tools/check-server.js` | 32 live-server assertions, runnable against a deploy |
 | `HOSTING.md` | Deployment options |
-| `CHANGES-v3.md` | Full change log + test results |
+| `CHANGES-v3.md` | Full change log + test results, v3 and v3.2 |
 
 ## Key architecture facts
 
@@ -79,7 +89,13 @@ answers captured on the laptop. Keep this working; it is the fallback.
   `fields()` in `join.js` and `PHONE_KINDS`/`takesPhone()` in `live.js`.
   A scene with `noPhone:true` is deliberately facilitator-led.
 - Cache-busting: bump `?v=` in `index.html` **and** `join.html` after editing JS/CSS,
-  or browsers serve stale files. This has bitten twice.
+  or browsers serve stale files. This has bitten twice. Currently `?v=3.2`.
+- **The join QR is not a file.** `/qr`, `/qr.svg` and `/qr.png` are drawn per request
+  from `baseUrl(req)`, which prefers `PUBLIC_URL`, then `x-forwarded-host`, then the
+  request `Host`, and substitutes the LAN IP when that host is `localhost`. Never
+  reintroduce a pre-generated QR as the thing a session serves.
+- Facilitator auth accepts `?key=` **or** the `tmrfac` httpOnly cookie. Auto-claim is
+  loopback-only and deliberately so; `FAC_KEY` gives a stable key for hosted use.
 
 ## Hard content rules — do not violate
 
@@ -129,35 +145,33 @@ Sourced from four approved documents (`.pptx` + 3 `.docx` in `BETMR\..\Downloads
 
 ## Open items / what to do next
 
-### 1. Public link (the main outstanding ask)
-The user wants a link that works on **any** network with **no code**, just a scan.
-The session code is already optional — scanning is sufficient; the code is only a
-displayed fallback.
+### 1. Public link — down to three clicks the user has to make
+Everything on the code side is done. `render.yaml` is committed at the repo root,
+there is no build step, and **the QR needs no regeneration after deploying** —
+the server draws it from the request host. The remaining action needs their
+hosting account:
 
-Two paths, both need one action from the user:
+> render.com → sign in with GitHub → **New → Blueprint** → pick
+> `Lexi-Tafoya/BETME-Learning-Hub`.
 
-- **Fastest, no account:** Cloudflare quick tunnel.
-  ```bash
-  cloudflared tunnel --url http://localhost:8080
-  ```
-  Prints a public `https://…trycloudflare.com` URL that works on cell data and any
-  Wi-Fi. Then regenerate the QR:
-  `python make-qr.py https://<that-url>/join`
-  Requires installing `cloudflared` once. Laptop must stay running.
-- **Permanent hosted:** deploy to Azure App Service (best fit for a Microsoft
-  tenant) or Render. Zero dependencies, so no build step. Set `PUBLIC_URL` env var,
-  then regenerate the QR. Exact commands in `HOSTING.md`.
+Then, for a real session on that URL, set `FAC_KEY` in the Render dashboard and
+bookmark `/presenter?key=<it>` — on a public URL loopback auto-claim cannot
+apply, by design, so without this the first stranger to open `/presenter` could
+drive the session.
 
-**I could not deploy** — it requires signing in to a hosting account.
-**Flag before hosting publicly:** the content carries an INTERNAL Purview marking.
-Azure inside their own subscription avoids the data-classification question; a
-public free tier may not. Worth one check.
+Alternatives, both still valid and documented in `HOSTING.md`: `az webapp up`
+for Azure App Service (needs the Azure CLI installed, not currently on the
+machine), or `cloudflared tunnel --url http://localhost:8080` (needs
+`cloudflared` installed; the URL changes every run, so do not print that QR).
 
-### 2. Consider removing the facilitator `?key=` friction
-The user hit the phone-not-updating bug partly because the presenter was opened
-without the key. Options: auto-issue the key via a first-visit cookie, or show a
-prominent banner on `/presenter` when the key is missing. Currently it only
-flashes a message.
+**Still flag before a real public session:** the content carries an INTERNAL
+Purview marking. Azure inside their own subscription avoids the
+data-classification question; the public Render free tier does not. The user has
+chosen to keep the GitHub repo public with this understanding.
+
+### 2. Facilitator `?key=` friction — done in v3.2
+Loopback auto-claim via an httpOnly cookie, a stable `FAC_KEY` for hosted use,
+and a standing banner when a console is not in control. See `CHANGES-v3.md`.
 
 ### 3. Not yet done from round 2
 - "Make Jordan feel like a case study" — richer build-up (role, team, history,
@@ -181,8 +195,24 @@ flashes a message.
 6. `screenWaiting()` read `ST.code` before `ST` was assigned, silently killing the
    phone app's boot.
 7. Auto-open (v3.1): arriving at an activity scene didn't open it on phones.
+8. v3.2: the QR modal printed `location.origin + '/join'`, so a console opened on
+   localhost showed the room an address no phone could reach.
+9. v3.2, in `qr.js` before it shipped: the format-information bit order was
+   reversed in both copies and overwrote the dark module. Every *data* module was
+   already correct, so the output looked like a perfectly tidy QR code and was
+   unreadable by any scanner. Only the matrix diff in `tools/verify-qr.py` caught
+   it. If you ever touch `qr.js`, run that script — 120 checks, and it is the
+   only thing standing between a plausible square and a working one.
 
 ## Current session state (as of handoff)
 
-A server may still be running on port 8080 from the previous chat. If the links
-are dead, just restart it. The facilitator key changes on every restart.
+Servers may still be running from earlier work — port 8080 from an older chat,
+port 8099 used for the v3.2 test runs. Restart as needed; nothing is persisted.
+
+Run both check suites after any change to the server, `qr.js` or `live.js`:
+
+```bash
+python tools/verify-qr.py
+node server.js                              # in another terminal
+node tools/check-server.js http://localhost:8080
+```
