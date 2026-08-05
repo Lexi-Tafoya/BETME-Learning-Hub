@@ -1,0 +1,20 @@
+# Nothing to install, so nothing to ignore there — but just in case.
+node_modules/
+*.log
+
+# Local packages and backups live in the parent working folder, not in git.
+*.zip
+_backups/
+
+# Generated print artwork. Rebuild with:  python make-qr.py <url>
+# Kept out of git for two reasons: the QR a session actually uses is drawn by the
+# server at /qr and is not a file, and these encode whichever address the laptop
+# had when they were generated — no reason to publish an internal one.
+assets/join-qr.svg
+assets/join-qr.png
+assets/join-qr-card.png
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store

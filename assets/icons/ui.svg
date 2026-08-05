@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor"
+    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor"
+    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3zM9 4v13M15 7v13"
+    fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+    stroke-linejoin="round"/></symbol>
+  <symbol id="i-notes" viewBox="0 0 24 24"><path d="M5 3h11l4 4v14H5zM9 9h7M9 13h7M9 17h4" fill="none"
+    stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none"
+    stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-fac" viewBox="0 0 24 24"><path d="M3 20a7 7 0 0 1 14 0M17.5 4.5l1.6 1.6M21 9h-2.2M19.1 12.9l-1.6-1.6"
+    fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="10" cy="8"
+    r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/></symbol>
+</svg>

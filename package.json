@@ -1,0 +1,13 @@
+{
+  "name": "tmr-learning-experience",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Master Electronics INTERNAL - Building the Future of Talent: facilitator-led TMR presentation with anonymous live participant responses.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "qr": "python make-qr.py"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

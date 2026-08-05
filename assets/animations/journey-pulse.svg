@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"
+     role="img" aria-label="Section landmark pulse">
+  <circle cx="60" cy="60" r="10" fill="#FCF3E7" opacity=".9"/>
+  <circle cx="60" cy="60" r="10" fill="none" stroke="#FCF3E7" stroke-width="2">
+    <animate attributeName="r" values="10;46" dur="2.8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values=".55;0" dur="2.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="60" cy="60" r="10" fill="none" stroke="#FCF3E7" stroke-width="1.6">
+    <animate attributeName="r" values="10;46" dur="2.8s" begin="1.4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values=".4;0" dur="2.8s" begin="1.4s" repeatCount="indefinite"/>
+  </circle>
+</svg>

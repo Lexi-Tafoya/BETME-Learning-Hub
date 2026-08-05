@@ -1,0 +1,115 @@
+================================================================================
+  BUILDING THE FUTURE OF TALENT
+  TMR Learning Experience  v3  —  Master Electronics | INTERNAL
+  For Autumn and Lexi
+================================================================================
+
+TO RUN THE LIVE SESSION (phones can join)
+-----------------------------------------
+1. Open a terminal in this folder.
+2. Run:      node server.js
+3. It prints the links. Open the first two on your laptop:
+
+     FACILITATOR CONSOLE   http://localhost:8080/presenter
+     PROJECTED DISPLAY     http://localhost:8080/display
+     PARTICIPANTS          http://<your-ip>:8080/join     <- the QR code
+
+4. Put the projected display on the room screen. Keep the console on your laptop.
+5. Click "Live controls" -> "Show join QR" and let the room scan it once.
+
+Phones must be on the same Wi-Fi as your laptop. Nothing is installed on phones.
+
+You do NOT need to paste a key. Opening /presenter on the laptop running the
+server claims the console and keeps it, refresh included. The terminal also
+prints a /presenter?key=... link -- use that one only from a different device,
+or to take control back. If a console is ever not in control, it says so on
+screen rather than letting the buttons quietly do nothing.
+
+The QR is drawn fresh every time it is requested, for whatever address the
+laptop currently has. Change rooms, change Wi-Fi, it stays correct. There is
+nothing to regenerate.
+
+
+TO RUN WITHOUT PHONES (backup mode)
+-----------------------------------
+Just double-click  index.html
+
+Everything works exactly as before: you capture the room's answers on the
+laptop by tapping each option once per raised hand, or by typing counts in
+facilitator mode. Use this if the network fails or you prefer manual entry.
+The opening confidence question is designed to work either way.
+
+
+THE FIVE THINGS TO KNOW
+-----------------------
+1. SPACE or Continue moves everything forward. Content unfolds one idea at a
+   time and the camera flies between sections. You never say "next slide".
+
+2. Press F for facilitator mode: your talking points, timings, handoffs and
+   the live controls. Press F again for a clean screen.
+
+3. Press M for the journey map. Click any of the twelve sections to jump.
+
+4. Press T to start the session clock. Double-click it to reset.
+
+5. Live controls (bottom right, facilitator console only):
+     Open activity      pushes it to every phone
+     Close responses    stops accepting, keeps what came in
+     Reopen             lets latecomers in
+     Show / Hide results
+     Reveal teaching point
+     Start / Pause / Reset the activity timer
+     Show join QR
+     Clear this activity
+     Export results     anonymous aggregate JSON
+
+
+WHICH MOMENTS GO TO PHONES
+--------------------------
+Opening confidence  ·  Performance Review vs TMR  ·  Which classification does
+the evidence support  ·  The 1-4 scale  ·  Rewrite the statement  ·  Reducing
+bias  ·  Leader preparation  ·  Rate Jordan (ratings, classification, 12-month,
+missing evidence, development recommendation)  ·  Development and utilization
+·  Future Business Enablement priorities  ·  Closing confidence  ·  Final
+Reflection (private)
+
+Deliberately facilitator-led, not on phones:
+  "Two leaders, same competency, different conclusions" — this one stays a
+  group discussion.
+
+
+PRIVACY
+-------
+No name, no email, no employee ID, no login, no Microsoft identity. Phones
+store one random id so a re-submission replaces rather than duplicates.
+Nothing is written to disk; closing the server discards everything. Written
+answers appear without any attribution, and the Final Reflection is never
+displayed at all.
+
+
+IF SOMETHING GOES WRONG
+-----------------------
+Participant phone slept or refreshed   It reconnects and resumes by itself.
+Facilitator refresh                    Reopens on the same scene with responses intact.
+Display refresh                        Re-syncs to the presenter within a second.
+Live connection drops                  A notice appears; the presentation keeps
+                                       working and you can capture answers on the laptop.
+Need a specific scene fast             index.html?s=jordan-worksheet  (or ?s=22)
+Moved to a different network           Nothing to do. Reopen the join QR.
+Controls seem to do nothing            Read the banner on screen. Another device
+                                       holds the console; open the
+                                       /presenter?key=... link to take it back.
+
+Every activity's presenter notes contain a no-technology backup. The full
+workshop is deliverable with no phones and no server.
+
+
+TIMING
+------
+32 scenes, 12 sections, 180 minutes. The six published agenda blocks are
+unchanged. The Jordan practice (7/8/7) and the Final Reflection (10 minutes
+including the silence) are protected — do not cut them.
+
+Full documentation: README.md
+Hosting a public URL: HOSTING.md
+================================================================================
