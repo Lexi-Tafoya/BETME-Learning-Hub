@@ -40,7 +40,7 @@ https://tmr-learning-experience.onrender.com
 | | |
 |---|---|
 | Landing page, every link | `https://<host>/` |
-| Facilitator console | `https://<host>/presenter?key=…` |
+| Facilitator console | `https://<host>/presenter` — open it first and it is yours |
 | Projected display | `https://<host>/display` |
 | Participants | `https://<host>/join` |
 | Join QR | `https://<host>/qr` — already correct, nothing to regenerate |
@@ -84,26 +84,21 @@ screen — the address changes every time you start a tunnel, so do not print it
 
 ## Two things to settle before a real session on a public URL
 
-### 1. The facilitator key
+### 1. The facilitator console
 
-On your own laptop there is nothing to do: the first visit to `/presenter` from
-that machine claims the console and holds it in a cookie. No key to paste, and a
-refresh keeps working.
+There is nothing to set up, on a laptop or on a public URL. Open `/presenter`
+and you are the presenter. A refresh keeps it.
 
-On a **public URL nobody is on the laptop**, so that auto-claim cannot apply —
-which is deliberate, because otherwise the first stranger to open `/presenter`
-would be driving your workshop. Set a key you choose:
+The protection on a public URL is that **only one console is live at a time.**
+Whoever opens `/presenter` first holds it. Everyone arriving after that gets a
+read-only view that follows the presenter with its controls hidden, and is told
+that another facilitator is already presenting. The only way the console moves is
+the current facilitator pressing **Transfer control** in Live controls, which
+frees the claim and revokes their own session in the same action, so a hand-off
+can never leave two people driving the room.
 
-1. Render dashboard → your service → **Environment** → add
-   `FAC_KEY` = a long random string.
-2. Bookmark `https://<host>/presenter?key=<that string>`.
-
-That link is then stable forever, which is easier than reading a rotating key out
-of a log. Treat it as private — anyone holding it can drive the session.
-
-If you skip this, the console still tells you plainly that it is not in control
-rather than failing silently, and the presentation still runs with answers
-captured on the laptop.
+So open `/presenter` yourself before you share the URL, and you hold the session
+for its duration. No key, no token, no environment variable.
 
 ### 2. Whether a public host is acceptable at all
 
@@ -123,8 +118,9 @@ deployment and no hosting step is needed at all.
 | Variable | Purpose | Default |
 |---|---|---|
 | `PORT` | Listening port | `8080` |
-| `FAC_KEY` | Fixed facilitator key, so the console link is stable | random each start |
 | `PUBLIC_URL` | Forces the advertised base URL, overriding the request host | auto-detected |
+
+Both are optional. Nothing needs to be set to run a session.
 
 ## What the server needs
 
@@ -138,7 +134,7 @@ nothing to break at startup.
 node tools/check-server.js https://your-host
 ```
 
-32 assertions covering pages, the QR, facilitator access, anonymous aggregation,
+35 assertions covering pages, the QR, facilitator access, anonymous aggregation,
 duplicate submissions, closing and reopening, SSE and export. Exits non-zero on
 failure. It expects a server nothing has driven yet, and will say so if the
 console is already claimed.

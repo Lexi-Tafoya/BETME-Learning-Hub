@@ -19,11 +19,12 @@ TO RUN THE LIVE SESSION (phones can join)
 
 Phones must be on the same Wi-Fi as your laptop. Nothing is installed on phones.
 
-You do NOT need to paste a key. Opening /presenter on the laptop running the
-server claims the console and keeps it, refresh included. The terminal also
-prints a /presenter?key=... link -- use that one only from a different device,
-or to take control back. If a console is ever not in control, it says so on
-screen rather than letting the buttons quietly do nothing.
+There is no key, no token and nothing to set up. Open /presenter and you are the
+presenter, refresh included. Anyone who opens it after you gets a read-only view
+that follows your screen with its controls hidden, and is told that another
+facilitator is already presenting. To hand the console to someone else, press
+"Transfer control" in Live controls; they then reload /presenter and it is
+theirs. Only one console is ever live at a time.
 
 The QR is drawn fresh every time it is requested, for whatever address the
 laptop currently has. Change rooms, change Wi-Fi, it stays correct. There is
@@ -97,8 +98,8 @@ Live connection drops                  A notice appears; the presentation keeps
 Need a specific scene fast             index.html?s=jordan-worksheet  (or ?s=22)
 Moved to a different network           Nothing to do. Reopen the join QR.
 Controls seem to do nothing            Read the banner on screen. Another device
-                                       holds the console; open the
-                                       /presenter?key=... link to take it back.
+                                       holds the console. Have them press
+                                       "Transfer control", then reload.
 
 Every activity's presenter notes contain a no-technology backup. The full
 workshop is deliverable with no phones and no server.

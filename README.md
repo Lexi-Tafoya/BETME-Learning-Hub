@@ -33,10 +33,12 @@ entry.
 | `/join` | Participant phones | One scan, one page, whole session. |
 | `/qr`, `/qr.svg`, `/qr.png` | — | The join QR, drawn live for the current address. |
 
-**No key to paste.** The first visit to `/presenter` from the laptop running the server
-claims the console and keeps it, so a refresh stays in control. The printed
-`/presenter?key=…` link still works from any other device, or to take control back. If a
-console is ever *not* in control it now says so on screen instead of quietly doing nothing.
+**No key, no token, no setup.** Open `/presenter` and you are the presenter; a refresh
+keeps it. Anyone who opens it after that gets a read-only view that follows you with its
+controls hidden, and is told another facilitator is already presenting. The console only
+moves when you press **Transfer control**, which revokes your own session as it frees the
+claim — so a hand-off can never leave two people driving the room. That one-console rule
+is the whole protection model, including on a public URL.
 
 **Nothing to regenerate.** The QR is drawn per request for whatever address the request
 arrived on, so it is right on a LAN, behind a tunnel and on a hosted URL. `make-qr.py` is
@@ -219,7 +221,7 @@ make-qr.py          print artwork: high-resolution QR and the join card
 render.yaml         one-click Render deploy
 tools/
   verify-qr.py      proves qr.js against the reference encoder, and decodes it
-  check-server.js   32 live-server assertions
+  check-server.js   35 live-server assertions
   qr-dump.js        matrix dump used by verify-qr.py
 START HERE.txt      one-page launch card
 README.md           this file

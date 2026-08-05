@@ -73,25 +73,26 @@
 
   /** A standing banner, not a flash — this state does not resolve on its own. */
   function facWarn(show) {
+    // A console that is not in control is read-only: it follows the presenter
+    // and its controls are put away rather than left there to be pressed.
+    var panel = $('#facPanel'), toggle = $('#facPanelToggle');
+    if (panel) panel.style.display = show ? 'none' : '';
+    if (toggle) toggle.style.display = show ? 'none' : '';
+
     var el = $('#facWarn');
     if (!show) { if (el) el.remove(); return; }
-    if (el) { el.classList.remove('gone'); return; }
-    var w = LIVE.who || {};
+    if (el) return;
     el = document.createElement('div');
     el.id = 'facWarn';
     el.className = 'facwarn';
     el.innerHTML =
-      '<b>This screen is not driving the session.</b>'
-      + '<p>' + (w.claimed
-        ? 'Another device already claimed the facilitator console, so controls here '
-          + 'do nothing and phones will not follow this screen.'
-        : 'The facilitator console needs its key before it can push scenes to phones.')
-      + '</p>'
-      + '<p class="fw-fix">Open the console using the link ending in '
-      + '<code>?key=&hellip;</code>. On this laptop the server prints it; on a hosted '
-      + 'session it is the <code>FAC_KEY</code> you set. Presenting without it still '
-      + 'works &mdash; the room just captures answers on this laptop instead of phones.</p>'
-      + '<button type="button" class="fw-x">Continue without phones</button>';
+      '<b>Another facilitator is already presenting.</b>'
+      + '<p>This screen is following theirs, read-only. Your controls are hidden so '
+      + 'nothing here can interrupt the room.</p>'
+      + '<p class="fw-fix">To present from this device instead, the facilitator who is '
+      + 'running the session presses <b>Transfer control</b> in their Live controls. '
+      + 'Reload this page afterwards and it becomes the console.</p>'
+      + '<button type="button" class="fw-x">Continue read-only</button>';
     document.body.appendChild(el);
     el.querySelector('.fw-x').onclick = function () { el.remove(); };
   }
@@ -142,8 +143,8 @@
       if (touched) rerenderCurrent();
     }
 
-    // 2. the display mirrors the presenter's stage exactly
-    if (ROLE === 'display') {
+    // 2. the display — and a read-only second console — mirror the presenter
+    if (ROLE === 'display' || (ROLE === 'presenter' && LIVE.fac === false)) {
       if (st.stepIndex !== window.State.i || st.rv !== window.State.rv) {
         LIVE.suppress = true;
         window.gotoStep(st.stepIndex, st.rv);
@@ -176,6 +177,7 @@
   // app.js calls this from inside goto(), so it fires on every real stage change
   LIVE.onStage = function (i, rv) {
     if (ROLE !== 'presenter' || LIVE.suppress) return;
+    if (LIVE.fac === false) return;         // read-only console drives nothing
     post('stage', { stepIndex: i, rv: rv });
     // Arriving at a scene that takes phone responses opens it automatically, so
     // pressing Continue is all the facilitator has to do. Manual Close / Reopen
@@ -222,6 +224,7 @@
       + '<button class="fpb" data-a="qr">Show join QR</button>'
       + '<button class="fpb" data-a="clear">Clear this activity</button>'
       + '<button class="fpb" data-a="export">Export results</button>'
+      + '<button class="fpb" data-a="transfer">Transfer control</button>'
       + '</div>';
     document.body.appendChild(p);
 
@@ -242,6 +245,13 @@
       if (a === 'clear')   { if (confirm('Clear every response for this activity?'))
                               post('clearStep', { stepId: s.id }); }
       if (a === 'qr')      qrModal();
+      if (a === 'transfer') {
+        if (confirm('Hand the console to the next device that opens /presenter?\n\n'
+          + 'This screen becomes read-only. The session, the phones and every '
+          + 'response captured so far are unaffected.')) {
+          post('transfer').then(function () { whoami(); });
+        }
+      }
       if (a === 'export')  window.open('/api/export?key=' + encodeURIComponent(LIVE.key), '_blank');
     });
 

@@ -73,24 +73,21 @@ let S = fresh();
 const clients = new Set();
 
 /* ------------------------------------------------------- facilitator access
-   The console needs a key so a participant cannot drive the session. Having to
-   carry that key in the URL was a real source of trouble: opening /presenter
-   without it left every control silently returning 401, which on the day looks
-   exactly like the phones being broken.
+   Open /presenter and you are the presenter. Nothing to paste, nothing to set.
 
-   So the first visit to /presenter from this laptop claims the console and gets
-   the key back in an httpOnly cookie. Nothing to copy, nothing to paste. The
-   printed ?key=… link still works, and using it also sets the cookie, so a
-   later refresh without the query string stays authorised.
+   The first visit claims the console and gets a key back in an httpOnly cookie,
+   so a refresh stays in control. Everyone who arrives afterwards gets a
+   read-only view and is told who has it — which is what keeps a public URL
+   safe without asking the facilitator to manage a secret: there is only ever
+   one live console, and the only way to move it is the current facilitator
+   pressing Transfer control.
 
-   Auto-claim is restricted to loopback — the machine actually running the
-   server. Behind a proxy or on a hosted URL nobody is loopback, so there the
-   key is still required; set FAC_KEY to a value of your own and the presenter
-   link becomes stable enough to bookmark.
+   Transfer rotates the key. That is the point: it revokes the previous
+   console's cookie in the same breath as it frees the claim, so a transfer can
+   never leave two devices both able to drive the room.
    ------------------------------------------------------------------------- */
-const FAC_KEY = process.env.FAC_KEY || rnd(8);
-const FAC_FROM_ENV = !!process.env.FAC_KEY;
 const FAC_COOKIE = 'tmrfac';
+let facKey = process.env.FAC_KEY || rnd(8);
 let facClaimed = false;
 
 function cookies(req) {
@@ -113,13 +110,13 @@ function loopback(req) {
 }
 
 function authed(req, key) {
-  if (key && key === FAC_KEY) return true;
-  return cookies(req)[FAC_COOKIE] === FAC_KEY;
+  if (key && key === facKey) return true;
+  return cookies(req)[FAC_COOKIE] === facKey;
 }
 
 function facCookie(req) {
   const secure = /^https/.test((req.headers['x-forwarded-proto'] || '').split(',')[0].trim());
-  return FAC_COOKIE + '=' + FAC_KEY + '; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax'
+  return FAC_COOKIE + '=' + facKey + '; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax'
     + (secure ? '; Secure' : '');
 }
 
@@ -345,6 +342,9 @@ const server = http.createServer(async (req, res) => {
                        break;
       case 'reset':    { const code = S.code; S = fresh(); S.code = code; S.live = true; break; }
       case 'newcode':  S.code = makeCode(); break;
+      // Hand the console to the next device that opens /presenter. Rotating the
+      // key is what makes this a hand-off rather than a second facilitator.
+      case 'transfer': facKey = rnd(8); facClaimed = false; break;
       default: return send(res, 400, { error: 'unknown action' });
     }
     broadcast();
@@ -382,7 +382,7 @@ const server = http.createServer(async (req, res) => {
   /* ---- roles */
   if (p === '/presenter') {
     const ok = authed(req, u.searchParams.get('key'));
-    const claim = ok || (!facClaimed && loopback(req));
+    const claim = ok || !facClaimed;         // first one in is the presenter
     if (claim) facClaimed = true;
     return serveFile(res, 'index.html', claim ? { 'Set-Cookie': facCookie(req) } : undefined);
   }
@@ -394,7 +394,7 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/whoami') return send(res, 200, {
     facilitator: authed(req, u.searchParams.get('key')),
     claimed: facClaimed,
-    keyFromEnv: FAC_FROM_ENV,
+    keyFromEnv: !!process.env.FAC_KEY,
     hosted: !loopback(req),
     joinUrl: joinUrl(req)          // so the QR modal shows the address phones use
   });
@@ -441,9 +441,9 @@ server.listen(PORT, () => {
   console.log('\n  SESSION CODE:   ' + S.code + '\n');
   console.log('  FACILITATOR   (your laptop, keep private)');
   console.log('     http://localhost:' + PORT + '/presenter');
-  console.log('       Opening that on this laptop claims the console — no key to paste.');
-  console.log('     http://localhost:' + PORT + '/presenter?key=' + FAC_KEY);
-  console.log('       Use this one from any other device, or to take control back.\n');
+  console.log('       Just open it. The first device to do so is the presenter, and');
+  console.log('       stays the presenter through refreshes. Anyone opening it after');
+  console.log('       that gets a read-only view until you press Transfer control.\n');
   console.log('  PROJECTED DISPLAY   (the room screen)');
   console.log('     http://localhost:' + PORT + '/display\n');
   console.log('  PARTICIPANTS   (this is what the QR code points to)');

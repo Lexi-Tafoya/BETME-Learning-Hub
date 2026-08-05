@@ -129,7 +129,7 @@ function firstEvent(query) {
     const pres = await req('/presenter');
     const setCookie = pres.headers.get('set-cookie') || '';
     // 16 random hex characters, or whatever FAC_KEY was set to.
-    ok('/presenter from loopback claims the console', /tmrfac=\S+/.test(setCookie),
+    ok('the first device to open /presenter becomes the console', /tmrfac=\S+/.test(setCookie),
       setCookie || '(no Set-Cookie)');
     ok('the cookie is httpOnly and same-site', /HttpOnly/i.test(setCookie)
       && /SameSite=Lax/i.test(setCookie));
@@ -148,19 +148,33 @@ function firstEvent(query) {
     ok('another device is told it is not in control', stranger.j.facilitator === false
       && stranger.j.claimed === true, JSON.stringify(stranger.j));
 
-    const proxyClaim = await req('/presenter', { headers: proxied });
-    ok('a proxied request cannot auto-claim the console',
-      !/tmrfac=/.test(proxyClaim.headers.get('set-cookie') || ''));
+    // One live console at a time is the whole protection model now, so this is
+    // the assertion that matters on a public URL: second arrival gets nothing.
+    const second = await req('/presenter', { headers: proxied });
+    ok('a second device does not get the console',
+      !/tmrfac=/.test(second.headers.get('set-cookie') || ''));
+
+    // Transfer must free the claim AND revoke the old cookie. If it only did the
+    // first, a transfer would leave two devices able to drive the room.
+    await json('/api/control', { method: 'POST', headers: cookie, body: { action: 'transfer' } });
+    const after = await json('/api/whoami', { headers: cookie });
+    ok('transfer revokes the previous console', after.j.facilitator === false
+      && after.j.claimed === false, JSON.stringify(after.j));
+
+    const next = await req('/presenter');
+    const nextCookie = next.headers.get('set-cookie') || '';
+    ok('the next device to open /presenter becomes the console',
+      /tmrfac=\S+/.test(nextCookie) && nextCookie.indexOf(cookie.cookie.split('=')[1]) < 0);
+    cookie = { cookie: nextCookie.split(';')[0] };
+
+    const drives = await json('/api/control',
+      { method: 'POST', headers: cookie, body: { action: 'stage', stepIndex: 5, rv: 1 } });
+    ok('and it can drive the session', drives.r.status === 200, 'status ' + drives.r.status);
   }
 
-  if (key) {
-    const byKey = await json('/api/control',
-      { method: 'POST', body: { action: 'stage', stepIndex: 4, rv: 1, key: key } });
-    ok('control still works with an explicit key', byKey.r.status === 200,
-      'status ' + byKey.r.status);
-  } else {
-    console.log('  skip  explicit-key check (set FAC_KEY to include it)');
-  }
+  // No explicit-key assertion any more: a key is no longer part of the
+  // facilitator's path, and Transfer control rotates it by design, so anything
+  // FAC_KEY was set to is deliberately not honoured after a hand-off.
 
   /* --------------------------------------------------------------- responses */
   console.log('\n  anonymous responses');

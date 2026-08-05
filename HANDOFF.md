@@ -14,7 +14,7 @@ Do **not** save, reference, edit or route anything through the MasterFlow projec
 This work is unrelated to it.
 
 **Current working build:** `BETMR\TMR Learning Experience\`
-**Latest package:** `BETMR\TMR Learning Experience v3.2 LIVE.zip`
+**Latest package:** `BETMR\TMR Learning Experience v3.3 LIVE.zip`
 **Backups:** `BETMR\_backups\` — back up before any structural change.
 
 **GitHub:** https://github.com/Lexi-Tafoya/BETME-Learning-Hub — **public**, and the
@@ -48,8 +48,8 @@ Prints three links. Roles:
 
 | Route | Device | Notes |
 |---|---|---|
-| `/presenter` | Facilitator laptop | Opening it on the machine running the server claims the console via a cookie. **No key to paste** (v3.2). |
-| `/presenter?key=…` | Any other device | Still works, and also sets the cookie, so a later refresh without the query string stays in control. Needed on a hosted URL, where loopback auto-claim cannot apply. |
+| `/presenter` | Facilitator laptop | Open it and you are the presenter. First device in wins; a refresh keeps it. **No key, no token, no env var** (v3.3). |
+| `/presenter` (anyone after) | Any other device | Read-only: mirrors the presenter, controls hidden. Moves only when the facilitator presses **Transfer control**. |
 | `/display` | Room screen | Clean. Notes/controls hidden. Mirrors the presenter. |
 | `/join` | Phones | One scan, whole session. Same Wi-Fi as the laptop. |
 
@@ -72,9 +72,9 @@ answers captured on the laptop. Keep this working; it is the fallback.
 | `make-qr.py` | Print artwork only now: high-resolution QR and the join card |
 | `render.yaml` | One-click Render deploy from the repo |
 | `tools/verify-qr.py` | Proves `qr.js` against the reference encoder, then decodes it (120 checks) |
-| `tools/check-server.js` | 32 live-server assertions, runnable against a deploy |
+| `tools/check-server.js` | 35 live-server assertions, runnable against a deploy |
 | `HOSTING.md` | Deployment options |
-| `CHANGES-v3.md` | Full change log + test results, v3 and v3.2 |
+| `CHANGES-v3.md` | Full change log + test results, v3, v3.2 and v3.3 |
 
 ## Key architecture facts
 
@@ -89,13 +89,15 @@ answers captured on the laptop. Keep this working; it is the fallback.
   `fields()` in `join.js` and `PHONE_KINDS`/`takesPhone()` in `live.js`.
   A scene with `noPhone:true` is deliberately facilitator-led.
 - Cache-busting: bump `?v=` in `index.html` **and** `join.html` after editing JS/CSS,
-  or browsers serve stale files. This has bitten twice. Currently `?v=3.2`.
+  or browsers serve stale files. This has bitten twice. Currently `?v=3.3`.
 - **The join QR is not a file.** `/qr`, `/qr.svg` and `/qr.png` are drawn per request
   from `baseUrl(req)`, which prefers `PUBLIC_URL`, then `x-forwarded-host`, then the
   request `Host`, and substitutes the LAN IP when that host is `localhost`. Never
   reintroduce a pre-generated QR as the thing a session serves.
-- Facilitator auth accepts `?key=` **or** the `tmrfac` httpOnly cookie. Auto-claim is
-  loopback-only and deliberately so; `FAC_KEY` gives a stable key for hosted use.
+- Facilitator auth is the `tmrfac` httpOnly cookie, issued to the first device that
+  opens `/presenter`. `facKey` is mutable: the `transfer` control action rotates it, which
+  revokes the current console as it frees the claim. That rotation is the reason a
+  hand-off cannot leave two devices able to drive the room — do not make it a const.
 
 ## Hard content rules — do not violate
 
@@ -154,10 +156,8 @@ hosting account:
 > render.com → sign in with GitHub → **New → Blueprint** → pick
 > `Lexi-Tafoya/BETME-Learning-Hub`.
 
-Then, for a real session on that URL, set `FAC_KEY` in the Render dashboard and
-bookmark `/presenter?key=<it>` — on a public URL loopback auto-claim cannot
-apply, by design, so without this the first stranger to open `/presenter` could
-drive the session.
+Nothing to configure afterwards. Open `/presenter` yourself before sharing the
+URL and you hold the console for the session; anyone later gets a read-only view.
 
 Alternatives, both still valid and documented in `HOSTING.md`: `az webapp up`
 for Azure App Service (needs the Azure CLI installed, not currently on the
@@ -169,9 +169,10 @@ Purview marking. Azure inside their own subscription avoids the
 data-classification question; the public Render free tier does not. The user has
 chosen to keep the GitHub repo public with this understanding.
 
-### 2. Facilitator `?key=` friction — done in v3.2
-Loopback auto-claim via an httpOnly cookie, a stable `FAC_KEY` for hosted use,
-and a standing banner when a console is not in control. See `CHANGES-v3.md`.
+### 2. Facilitator key friction — removed entirely in v3.3
+Open `/presenter`, you are the presenter. Second console is read-only and mirrors
+the first; **Transfer control** hands it over. Protection is one-live-console, not
+a secret, so `FAC_KEY` is no longer needed or mentioned. See `CHANGES-v3.md`.
 
 ### 3. Not yet done from round 2
 - "Make Jordan feel like a case study" — richer build-up (role, team, history,

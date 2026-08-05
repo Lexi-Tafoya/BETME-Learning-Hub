@@ -199,3 +199,43 @@ Jordan evidence, no Final Reflection wording, no presenter note, no handoff.
 `content-a.js` and `content-b.js` are untouched. The four round-2 items still
 open — the Jordan case-study build-up, discovering TMR before it is named, and
 the empty-chair beat — remain open, as they need your decision first.
+
+---
+
+# v3.3 — hotfix: open /presenter, you are the presenter
+
+v3.2 still gated the console on being *on the laptop*, which meant a hosted
+session needed `FAC_KEY`. That traded usability for protection the room does not
+need: the workshop is delivered by a trusted facilitator. Protection now comes
+from **one live console at a time** instead of from a secret.
+
+Files changed: `server.js`, `live.js`, `index.html`, `join.html`,
+`tools/check-server.js`, and the four docs. Nothing else.
+
+| Was | Is |
+|---|---|
+| Auto-claim only from loopback; a hosted session required `FAC_KEY` | The first device to open `/presenter` is the presenter, anywhere. A refresh keeps it. |
+| A second console showed a banner but still had live controls sitting there | A second console is genuinely read-only: it mirrors the presenter like `/display`, its Live controls are hidden, and `onStage` is short-circuited so it cannot drive. |
+| No way to hand the session over | **Transfer control** in Live controls. It rotates the key, which revokes the current console at the same moment it frees the claim — so a hand-off cannot leave two devices driving the room. |
+| `FAC_KEY` documented as a required hardening step for hosting | Removed from the facilitator's path entirely. Still readable as an initial value; no longer needed, mentioned, or honoured after a transfer. |
+
+`?key=` still works and is harmless, but nothing asks for it and nothing prints
+it as an instruction.
+
+## Verification
+
+`node tools/check-server.js` — **35 checks pass**, including the three new ones:
+transfer revokes the previous console, the next device to open `/presenter`
+becomes the console with a different cookie, and it can then drive the session.
+The obsolete assertion that a proxied request cannot auto-claim was replaced with
+the invariant that actually protects a public URL: a second device gets nothing.
+
+In a browser, with the console deliberately claimed by another client first: the
+second `/presenter` reported `fac: false`, showed *"Another facilitator is already
+presenting"*, hid its controls, and mirrored the holder at step 9 reveal 2.
+**Two Continue presses on it left the server at 9/2.** After the holder
+transferred, a reload made it the console and it drove the server to step 14. Two
+further cookie-less requests to `/presenter` failed to steal it. 0 JS errors.
+
+Participant sync, aggregation, auto-open, `/display` mirroring and backup mode are
+untouched and still pass their existing checks.
