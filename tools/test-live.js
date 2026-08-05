@@ -118,8 +118,12 @@ function contentChecks() {
   ok('no section references a scene that does not exist',
     secIds.every((i) => ids.includes(i)),
     'orphans: ' + secIds.filter((i) => !ids.includes(i)).join(', '));
-  ok('scene count is 33 (32 original + the closing visualisation)',
-    ids.length === 33, 'got ' + ids.length);
+  ok('scene count is 32 (duplicate Jordan dossier scene consolidated away)',
+    ids.length === 32, 'got ' + ids.length);
+  ok('there is exactly ONE Jordan case scene, not two',
+    ids.filter((i) => /^jordan-/.test(i)).length === 2,
+    'jordan scenes: ' + ids.filter((i) => /^jordan-/.test(i)).join(', '));
+  ok('the removed duplicate dossier scene is gone', !ids.includes('jordan-intro'));
 
   // renderers exist for every kind used
   const kinds = [...new Set([...src.matchAll(/kind:'([^']+)'/g)].map((m) => m[1]))];
@@ -129,7 +133,7 @@ function contentChecks() {
     'missing: ' + kinds.filter((k) => !renderers.has(k)).join(', '));
 
   // instructions on every interactive scene
-  const interactiveKinds = ['poll', 'rank', 'quiz', 'sort', 'match', 'worksheet',
+  const interactiveKinds = ['poll', 'rank', 'quiz', 'sort', 'match', 'meetjordan',
     'builder', 'bias', 'reflect', 'explorer', 'evgallery'];
   const instructKeys = [...(a.match(/^  '[a-z0-9-]+': \{$/gm) || [])]
     .map((s) => s.trim().replace(/':? \{$/, '').replace(/^'/, ''));
@@ -186,6 +190,117 @@ function contentChecks() {
     || /Submit one response per pair/i.test(fs.readFileSync(path.join(ROOT, 'join.js'), 'utf8')));
   ok('a business case is collected from each pair',
     /k: 'case'/.test(fs.readFileSync(path.join(ROOT, 'join.js'), 'utf8')));
+
+  section('JORDAN HOTFIX — PROJECTED SCREEN CARRIES ONLY THE TASK');
+  const joinJs = fs.readFileSync(path.join(ROOT, 'join.js'), 'utf8');
+  const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+
+  ok('the section is called "Meet Jordan"', /eyebrow:'Meet Jordan'/.test(b)
+    && /title:'Meet Jordan'/.test(b));
+  ok('"Executive Case Study" is gone from the audience view',
+    !/Executive Case Study/.test(src));
+  ok('the duplicate "evidence, while you work" screen is gone',
+    !/the evidence, while you work/i.test(src));
+
+  // the projected renderer must not build any part of the dossier
+  const mj = app.slice(app.indexOf('RENDER.meetjordan'),
+    app.indexOf('/* --- Jordan results'));
+  ok('the projected screen no longer renders the dossier helper',
+    !/jordanEvidence/.test(app));
+  ok('  no stakeholder quotes on the projected screen', !/stakeholders/.test(mj));
+  ok('  no evidence gaps on the projected screen', !/\.gaps/.test(mj));
+  ok('  no timeline on the projected screen', !/timeline/.test(mj));
+  ok('  no per-competency evidence rows on the projected screen',
+    !/\.hard|\.soft|anchor/.test(mj));
+  ok('  no rating form on the projected screen',
+    !/data-f=|addEventListener\('click'[\s\S]{0,80}Vote\.add/.test(mj));
+  ok('the projected screen does carry the task', /s\.task/.test(mj));
+  ok('  the submission list', /submitList/.test(mj));
+  ok('  the instructions', /s\.rules/.test(mj));
+  ok('  the one-phone-per-pair reminder', /One phone per pair/.test(mj));
+  ok('  the time', /s\.minutes/.test(mj));
+  ok('  and the calibration cue', /s\.cue/.test(mj));
+  ok('the facilitator fallback capture stays off the display',
+    /el\('div','fac-only'\)/.test(mj));
+
+  section('JORDAN HOTFIX — THE PHONE CARRIES THE CASE');
+  ok('the phone builds a dedicated Jordan screen', /function screenJordan/.test(joinJs));
+  ['bg', 'comp', 'stake', 'gaps', 'submit'].forEach((sec) =>
+    ok('  section "' + sec + '" is present',
+      new RegExp('data-sec="' + sec + '"').test(joinJs)));
+  ok('  background covers role history and responsibilities',
+    /priorRoles/.test(joinJs) && /responsibilities/.test(joinJs)
+    && /timeline/.test(joinJs) && /performance/.test(joinJs));
+  ok('  all four competencies with statement, observations, comments and gap',
+    /Approved competency statement/.test(joinJs)
+    && /Recorded observations/.test(joinJs)
+    && /Stakeholder comments/.test(joinJs)
+    && /Evidence gap/.test(joinJs));
+  ok('  the full stakeholder record', /P\.stakeholders/.test(joinJs));
+  ok('  where the evidence runs out', /P\.gaps/.test(joinJs));
+  ok('  and the pair submission form', /Your pair&rsquo;s response/.test(joinJs));
+  ok('the phone sections are navigable', /jdSetTab/.test(joinJs)
+    && /JD_TABS/.test(joinJs));
+  ok('the chosen section survives a refresh', /localStorage\.setItem\(JD_TAB/.test(joinJs));
+
+  section('JORDAN HOTFIX — ANSWERS SURVIVE NAVIGATION AND REFRESH');
+  ok('the Jordan screen is built once, not on every state frame',
+    /jdBuiltFor === s\.id && view\.querySelector\('\.jd'\)/.test(joinJs));
+  ok('tapping a rating updates in place instead of re-rendering',
+    /classList\.toggle\('pick', o === b\)/.test(joinJs)
+    && !/data-jf[\s\S]{0,200}screenJordan\(s\)/.test(joinJs));
+  ok('typing is saved on every keystroke', /oninput = function[\s\S]{0,140}saveDraft/.test(joinJs));
+  ok('a refresh restores the draft', /JSON\.parse\(localStorage\.getItem\(DRAFT/.test(joinJs));
+  ok('only the submit button refreshes when other pairs submit',
+    /jdFoot\(s\); return;/.test(joinJs));
+
+  section('JORDAN HOTFIX — NO VISUAL ANSWER HINTS ON THE PHONE');
+  ok('every piece of evidence uses one neutral card class',
+    /function jdRows/.test(joinJs) && /class="jdrow"/.test(joinJs));
+  ok('the neutral card has no colour fill', /\.jdrow\{[^}]*background:transparent/.test(joinHtml));
+  ok('the phone does not carry the strong/weak tone classes from the deck',
+    !/jdrow\.hard|jdrow\.soft|jdrow (strong|weak)/.test(joinJs));
+  ok('no tone value is read when rendering phone evidence',
+    !/x\.tone|\.tone\b/.test(joinJs));
+  ok('there is no green-for-strong styling in the Jordan phone view',
+    !/\.jdrow[^{]*\{[^}]*(111,207,155|--ok)/.test(joinHtml));
+  ok('there is no red-for-weak styling in the Jordan phone view',
+    !/\.jdrow[^{]*\{[^}]*(232,143,143|--no)/.test(joinHtml));
+  ok('there is no yellow-for-incomplete styling in the Jordan phone view',
+    !/\.jdrow[^{]*\{[^}]*(240,192,112|--warn)/.test(joinHtml));
+  ok('impression phrases are present but unhighlighted',
+    /I feel Jordan is a strong leader/.test(a)
+    && !/<(mark|em|strong)[^>]*>I feel/.test(a));
+  ok('no icon marks evidence as correct or incorrect',
+    !/jdrow[\s\S]{0,120}(svg|&#10003;|✓|✗)/.test(joinJs));
+
+  section('JORDAN HOTFIX — RESULTS SCENE');
+  const jr = app.slice(app.indexOf('RENDER.jordanresults'), app.indexOf('/** Median level'));
+  ok('the results screen does not repeat the dossier',
+    !/jordanEvidence|stakeholders|\.gaps|priorRoles/.test(jr));
+  ok('  it shows all four rating distributions', /s\.rows\.forEach/.test(jr)
+    && /hist\(/.test(jr));
+  ok('  the classification distribution', /'cls'/.test(jr));
+  ok('  the 12-month readiness distribution', /'12mo'/.test(jr));
+  ok('  anonymous business cases', /'case','The business cases/.test(jr));
+  ok('  anonymous missing evidence', /'need','Evidence the room said was still missing'/.test(jr));
+  ok('  anonymous recommended actions', /'dev','First development/.test(jr));
+  ok('  the calibration challenge comes before the written responses',
+    jr.indexOf('s.challenge') < jr.indexOf("'ev','Evidence the room pointed to'"));
+  ok('  and the debrief focuses on alignment, difference and missing evidence',
+    /Where the spread is widest/.test(b) && /Which missing evidence/.test(b));
+
+  ok('the live layer opens the Jordan activity on phones for the new scene kind',
+    /meetjordan:1/.test(fs.readFileSync(path.join(ROOT, 'live.js'), 'utf8')));
+  /* The step ID stays `jordan-worksheet` on purpose — it keys every response
+     already captured, and renaming it would orphan the results scene. What must
+     be gone is the old scene KIND and its renderer. */
+  ok('  the old scene kind and its renderer are gone',
+    !/kind:'worksheet'/.test(src) && !/RENDER\.worksheet/.test(app)
+    && !/case 'worksheet'/.test(joinJs) && !/worksheet:1/.test(
+      fs.readFileSync(path.join(ROOT, 'live.js'), 'utf8')));
+  ok('  the step id is unchanged so captured responses still resolve',
+    /id:'jordan-worksheet'/.test(b) && /const src = 'jordan-worksheet'/.test(app));
 
   section('FACILITATOR RATING SHEET');
   const sheetPath = path.join(ROOT, 'facilitator-rating-sheet.html');

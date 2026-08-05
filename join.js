@@ -143,7 +143,7 @@ function fields(s) {
         out.push({ k: 'k' + i, t: 'choice', q: kk, opts: s.opts });
       });
       break;
-    case 'worksheet':
+    case 'meetjordan':
       // One joint response per PAIR, submitted from one phone. The wording says
       // so on every screen, because a room that submits individually produces
       // twice the responses and half the discussion.
@@ -210,6 +210,247 @@ function fields(s) {
    the submit button hidden, so there is no path by which a stray tap sends
    something to the room. */
 function isRef(s) { return !!(s && s.phoneRef); }
+
+/* ------------------------------------------------------------------ Jordan
+   The whole case lives here now, not on the wall. One pair reads it together on
+   one phone, at reading distance, and answers in the same view.
+
+   Two constraints drove the shape of this screen.
+
+   First, a pair must be able to move between the evidence and their answers
+   without losing anything. So this is built ONCE and the sections are toggled
+   with a class — nothing is re-rendered when a rating is tapped, when text is
+   typed, or when a state frame arrives from the server. A re-render would reset
+   the scroll position and blur the textarea mid-sentence, which in testing was
+   enough to make people stop writing.
+
+   Second, the design must not grade the evidence for them. There is no colour
+   coding, no icon, no emphasis that separates strong evidence from an
+   impression. Every observation, quote and gap uses the identical neutral card.
+   "I feel", "people say" and "Jordan is always" are all still in the case,
+   unhighlighted — recognising them is the exercise, and a red border would do
+   that work for the participant.                                             */
+var JD_TAB = 'tmr-jd-tab';
+var jdBuiltFor = null;
+
+function jdTab() {
+  try { return localStorage.getItem(JD_TAB) || 'bg'; } catch (_) { return 'bg'; }
+}
+function jdSetTab(t) {
+  try { localStorage.setItem(JD_TAB, t); } catch (_) {}
+  var wrap = view.querySelector('.jd');
+  if (wrap) wrap.setAttribute('data-tab', t);
+  Array.prototype.forEach.call(view.querySelectorAll('.jdnav button'), function (b) {
+    b.classList.toggle('on', b.getAttribute('data-t') === t);
+  });
+  var sec = view.querySelector('.jd section[data-sec="' + t + '"]');
+  if (sec) sec.scrollIntoView({ block: 'start' });
+  window.scrollTo(0, Math.max(0, (sec ? sec.offsetTop : 0) - 96));
+}
+
+var JD_TABS = [
+  ['bg', 'Jordan'],
+  ['comp', 'Competencies'],
+  ['stake', 'Stakeholders'],
+  ['gaps', 'Gaps'],
+  ['submit', 'Submit']
+];
+
+function jdList(items) {
+  return '<ul class="jdul">' + items.map(function (x) {
+    return '<li>' + x + '</li>';
+  }).join('') + '</ul>';
+}
+
+/** Every piece of evidence, in the same neutral card. No grading, no colour. */
+function jdRows(items) {
+  return items.map(function (x) {
+    return '<div class="jdrow"><p>' + x + '</p></div>';
+  }).join('');
+}
+
+function screenJordan(s) {
+  var P = s.profile || {};
+  var fs = fields(s);
+  var h = '';
+
+  h += '<div class="jd" data-tab="' + esc(jdTab()) + '">';
+  h += '<p class="eyebrow">Meet Jordan</p>';
+  h += '<h1>Meet Jordan</h1>';
+  h += '<div class="pairbar"><b>One phone per pair.</b><span>Read the case together, then '
+    + 'submit a single joint response from this phone. No participant names are shown or '
+    + 'stored.</span></div>';
+  h += '<div class="jdnav">' + JD_TABS.map(function (t) {
+    return '<button type="button" data-t="' + t[0] + '"'
+      + (t[0] === jdTab() ? ' class="on"' : '') + '>' + t[1] + '</button>';
+  }).join('') + '</div>';
+
+  /* --- 1. background, role history, responsibilities ------------------- */
+  h += '<section data-sec="bg">';
+  h += '<h2>Jordan today</h2>';
+  h += '<div class="jdfacts">' + (P.facts || []).map(function (f) {
+    return '<div><dt>' + esc(f[0]) + '</dt><dd>' + f[1] + '</dd></div>';
+  }).join('') + '</div>';
+  h += '<h2>Employment and role history</h2>' + jdList(P.priorRoles || []);
+  h += '<h2>Major responsibilities</h2>' + jdList(P.responsibilities || []);
+  h += '<h2>Timeline</h2>';
+  h += '<div class="jdtl">' + (P.timeline || []).map(function (x) {
+    return '<div class="jdtli"><span>' + esc(x.y) + '</span><p>' + x.t + '</p></div>';
+  }).join('') + '</div>';
+  h += '<h2>Performance history</h2>' + jdList(P.performance || []);
+  h += '</section>';
+
+  /* --- 2. the four competencies -------------------------------------- */
+  h += '<section data-sec="comp">';
+  h += '<p class="jdlede">Four competencies to rate. Read what has been recorded for each one '
+    + 'before you decide anything.</p>';
+  (s.rows || []).forEach(function (r, i) {
+    h += '<div class="jdcomp">';
+    h += '<h2>' + (i + 1) + '. ' + esc(r.comp) + '</h2>';
+    h += '<p class="jdlab">Approved competency statement</p>';
+    h += '<div class="jdrow"><p>' + (r.anchor || r.ev) + '</p></div>';
+    if (r.hard && r.hard.length) {
+      h += '<p class="jdlab">Recorded observations</p>' + jdRows(r.hard);
+    }
+    if (r.soft && r.soft.length) {
+      h += '<p class="jdlab">Stakeholder comments</p>' + jdRows(r.soft);
+    }
+    if (r.gap) {
+      h += '<p class="jdlab">Evidence gap</p><div class="jdrow"><p>' + r.gap + '</p></div>';
+    }
+    h += '</div>';
+  });
+  h += '<h2>The 1&ndash;4 scale</h2>';
+  h += '<div class="jdscale">' + [[1, 'Basic', 'Has basic knowledge and can complete the task independently.'],
+      [2, 'Advanced', 'Completes independently with quality beyond the basics.'],
+      [3, 'Expert', 'Completes independently and can effectively teach others.'],
+      [4, 'Specialist', 'Identifies optimization opportunities, resolves sources of error, and develops improved solutions.']]
+    .map(function (L) {
+      return '<div><b>' + L[0] + ' &middot; ' + L[1] + '</b><span>' + L[2] + '</span></div>';
+    }).join('') + '</div>';
+  h += '</section>';
+
+  /* --- 3. the full stakeholder record --------------------------------- */
+  h += '<section data-sec="stake">';
+  h += '<h2>What stakeholders have said</h2>';
+  h += '<p class="jdlede">The complete record, as given.</p>';
+  h += (P.stakeholders || []).map(function (x) {
+    return '<div class="jdrow"><p>' + x.q + '</p><p class="jdwho">' + esc(x.who) + '</p></div>';
+  }).join('');
+  h += '</section>';
+
+  /* --- 4. where the evidence runs out -------------------------------- */
+  h += '<section data-sec="gaps">';
+  h += '<h2>Where the evidence runs out</h2>';
+  h += '<p class="jdlede">What is not known about Jordan. Missing evidence is a legitimate '
+    + 'finding, and you can say so in your answers.</p>';
+  h += jdRows(P.gaps || []);
+  h += '</section>';
+
+  /* --- 5. the pair submission ---------------------------------------- */
+  h += '<section data-sec="submit">';
+  h += '<h2>Your pair&rsquo;s response</h2>';
+  h += '<p class="jdlede">One response per pair. You can move back to the evidence at any '
+    + 'time &mdash; nothing you have entered here is lost.</p>';
+
+  fs.forEach(function (f, fi) {
+    h += '<div class="blk">';
+    h += '<p class="qnum">' + (fi + 1) + ' of ' + fs.length + (f.opt ? ' &middot; optional' : '')
+      + '</p>';
+    h += '<h3 class="jdq">' + f.q + '</h3>';
+    if (f.ev) h += '<p class="ev">' + esc(f.ev) + '</p>';
+    if (f.hint) h += '<p class="hint">' + esc(f.hint) + '</p>';
+
+    if (f.t === 'scale') {
+      h += '<div class="scale">';
+      [[1, 'Basic'], [2, 'Advanced'], [3, 'Expert'], [4, 'Specialist']].forEach(function (L) {
+        var on = String(answers[f.k]) === String(L[0] - 1);
+        h += '<button class="' + (on ? 'pick' : '') + '" data-jf="' + f.k + '" data-v="'
+          + (L[0] - 1) + '"><b>' + L[0] + '</b><span>' + L[1] + '</span></button>';
+      });
+      h += '</div>';
+    } else if (f.t === 'choice') {
+      h += '<div class="opts">';
+      f.opts.forEach(function (o, oi) {
+        var val = f.vals ? f.vals[oi] : oi;
+        var on = String(answers[f.k]) === String(val);
+        h += '<button class="opt' + (on ? ' pick' : '') + '" data-jf="' + f.k + '" data-v="'
+          + esc(val) + '"><span class="mk">' + String.fromCharCode(65 + oi) + '</span>'
+          + '<span>' + o + '</span></button>';
+      });
+      h += '</div>';
+    } else {
+      h += '<textarea data-t="' + f.k + '" placeholder="Type your answer…">'
+        + esc(answers[f.k] || '') + '</textarea>';
+    }
+    h += '</div>';
+  });
+  h += '</section>';
+  h += '</div>';
+
+  view.innerHTML = h;
+  jdBuiltFor = s.id;
+
+  // tabs
+  Array.prototype.forEach.call(view.querySelectorAll('.jdnav button'), function (b) {
+    b.onclick = function () { jdSetTab(b.getAttribute('data-t')); };
+  });
+
+  /* Choices update in place. Re-rendering here is what used to lose the pair's
+     scroll position and their half-typed business case. */
+  Array.prototype.forEach.call(view.querySelectorAll('[data-jf]'), function (b) {
+    b.onclick = function () {
+      var k = b.getAttribute('data-jf');
+      answers[k] = b.getAttribute('data-v');
+      var group = b.parentElement;
+      Array.prototype.forEach.call(group.querySelectorAll('[data-jf]'), function (o) {
+        o.classList.toggle('pick', o === b);
+      });
+      saveDraft(s.id);
+      jdFoot(s);
+    };
+  });
+  Array.prototype.forEach.call(view.querySelectorAll('[data-t]'), function (t) {
+    if (t.tagName !== 'TEXTAREA') return;
+    t.oninput = function () {
+      answers[t.getAttribute('data-t')] = t.value;
+      saveDraft(s.id);
+      jdFoot(s);
+    };
+  });
+
+  jdFoot(s);
+}
+
+/** The submit button, refreshed without touching the view. */
+function jdFoot(s) {
+  var need = required(s).filter(function (k) {
+    var v = answers[k];
+    return v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length);
+  }).length;
+  var btn = document.getElementById('send');
+  var label = sending ? 'Sending…'
+    : (need ? need + ' still to answer' : 'Submit our pair’s response');
+  if (!btn) {
+    foot.innerHTML = '<button class="btn" id="send">' + label + '</button>';
+    btn = document.getElementById('send');
+    btn.onclick = function () {
+      if (jdBuiltFor) {
+        var miss = required(s).filter(function (k) {
+          var v = answers[k];
+          return v === undefined || v === null || v === '';
+        });
+        if (miss.length) {
+          jdSetTab('submit');
+          toast('Answer every question before submitting.');
+          return;
+        }
+      }
+      submit();
+    };
+  } else btn.textContent = label;
+  btn.disabled = sending || need > 0;
+}
 
 function screenReference(s) {
   var h = '';
@@ -306,6 +547,15 @@ function render() {
   // reference sections: open, but nothing is collected
   if (s && isRef(s)) return screenReference(s);
 
+  /* The Jordan case. Built once and left alone: a state frame arriving from the
+     server every time another pair submits must not rebuild this view under a
+     pair who is halfway through typing. Only the submit button refreshes. */
+  if (s && s.kind === 'meetjordan' && ST.accepting && !alreadySent(s.id)) {
+    if (jdBuiltFor === s.id && view.querySelector('.jd')) { jdFoot(s); return; }
+    return screenJordan(s);
+  }
+  if (jdBuiltFor && (!s || s.kind !== 'meetjordan')) jdBuiltFor = null;
+
   if (!s || !interactive(s)) {
     return screenWaiting('You’re connected',
       'Nothing to answer right now. Follow the main screen — this page will update by '
@@ -389,7 +639,7 @@ function screenActivity(s) {
   var fs = fields(s), h = '';
   h += '<p class="eyebrow">' + esc(stripTags(s.eyebrow || 'Activity')) + '</p>';
   h += '<h1>' + esc(stripTags(s.title || '')) + '</h1>';
-  if (s.kind === 'worksheet') {
+  if (s.kind === 'meetjordan') {
     h += '<div class="pairbar"><b>Submit one response per pair.</b>'
       + '<span>Work with your partner and send a single joint response from this phone. '
       + 'No participant names are shown or stored.</span></div>';

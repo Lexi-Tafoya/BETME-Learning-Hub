@@ -21,7 +21,7 @@ const SECTIONS = [
   {n:5, t:'Competencies & the 1–4 Scale',steps:['comp-categories','comp-explorer','scale','scale-quiz']},
   {n:6, t:'Evidence and Bias',          steps:['evidence','evidence-build','bias']},
   {n:7, t:'Leader Preparation',         steps:['leader-prep']},
-  {n:8, t:'Jordan Practice Scenario',   steps:['jordan-intro','jordan-worksheet','jordan-results']},
+  {n:8, t:'Meet Jordan',                steps:['jordan-worksheet','jordan-results']},
   {n:9, t:'Calibration',                steps:['calibration-intro','calibration-what','calibration-challenge']},
   {n:10,t:'Development and Utilization',steps:['plans','plans-match','break']},
   {n:11,t:'Future Considerations',      steps:['future','future-rank']},
@@ -1389,125 +1389,69 @@ RENDER.bias = (s,c)=>{
   c.appendChild(el('p','src','Source: '+s.src));
 };
 
-/* --- Jordan intro */
-/* ---- Jordan: the shared evidence view
-   Used by both the intro scene and the pair-activity scene, because the pairs
-   need exactly the same evidence in front of them while they rate. Built as one
-   function so the two screens can never drift apart. */
-function jordanEvidence(s, c, opts){
-  opts = opts||{};
-  const P = s.profile;
+/* --- Meet Jordan: the projected activity screen
+   Deliberately spare. Two consecutive scenes used to carry Jordan's full
+   dossier — once to introduce her and once again while the pairs worked — which
+   meant the room read the same wall of evidence twice and then went looking for
+   it on their phones anyway.
 
-  if(P && opts.facts!==false){
-    const d = el('div','dossier'); d.setAttribute('data-rv','');
-    d.innerHTML = P.facts.map(([k,v])=>
-      `<div class="dcell"><p class="kicker">${k}</p><p class="dv">${v}</p></div>`).join('');
-    c.appendChild(d);
+   Jordan's background, competency evidence, stakeholder comments and evidence
+   gaps now live ONLY on the participant phone, where one pair reads them
+   together at reading distance. What stays on the wall is the task, what has to
+   be submitted, the rules, the clock and the calibration cue — the things a pair
+   needs to glance up and re-check without losing their place in the case.
+
+   The rating form is not here either. It is on the phone with the evidence, so a
+   pair never has to look away from one to use the other. */
+RENDER.meetjordan = (s,c)=>{
+  head(s,c,{instruct:false});
+
+  if(s.task){
+    const t = el('div','panel'); t.setAttribute('data-rv','');
+    t.innerHTML = `<p class="kicker">Your task</p>
+      <p style="margin:0;font:500 clamp(20px,2.1vw,30px)/1.45 var(--sans);color:var(--cream)">
+      ${s.task}</p>`;
+    c.appendChild(t);
   }
 
-  if(P && opts.history!==false){
-    const g = el('div','grid g2'); g.setAttribute('data-rv','');
-    g.innerHTML =
-      `<div class="card"><p class="kicker">How she got here</p>
-        <ul style="margin:0;padding-left:19px">${
-          P.priorRoles.map(x=>`<li>${x}</li>`).join('')}</ul></div>
-       <div class="card"><p class="kicker">What she is responsible for</p>
-        <ul style="margin:0;padding-left:19px">${
-          P.responsibilities.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
-    c.appendChild(g);
-
-    const perf = el('div','card tint'); perf.setAttribute('data-rv','');
-    perf.innerHTML = `<p class="kicker">Performance history</p>
+  const g = el('div','split'); g.setAttribute('data-rv','');
+  g.innerHTML =
+    `<div class="card"><p class="kicker">You will submit</p>
       <ul style="margin:0;padding-left:19px">${
-        P.performance.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-    c.appendChild(perf);
-  }
-
-  if(P && opts.timeline!==false){
-    const tw = el('div',''); tw.setAttribute('data-rv','');
-    tw.innerHTML = `<h3 style="margin:6px 0 12px">Timeline</h3>
-      <ul class="tl">${P.timeline.map(x=>
-        `<li><span class="tly">${x.y}</span><p class="tlt">${x.t}</p></li>`).join('')}</ul>`;
-    c.appendChild(tw);
-  }
-
-  /* The four competencies. The approved anchor sentence leads each one, with the
-     supporting evidence and the gap beneath it — so the room can see exactly how
-     much weight the anchor is actually carrying. */
-  s.rows.forEach((r,ri)=>{
-    const box = el('div','card'); box.setAttribute('data-rv','');
-    box.innerHTML = `<p class="kicker">Competency ${ri+1} of 4</p>
-      <h3 style="margin:2px 0 10px">${r.comp}</h3>
-      <div class="evrow"><p><strong>${r.anchor||r.ev}</strong></p>
-        <p class="evsrc">Recorded observation</p></div>
-      ${(r.hard||[]).map(x=>`<div class="evrow hard"><p>${x}</p></div>`).join('')}
-      ${(r.soft||[]).map(x=>`<div class="evrow soft"><p>${x}</p></div>`).join('')}
-      ${r.gap?`<div class="evrow gapbox"><p><strong>Evidence gap:</strong> ${r.gap}</p></div>`:''}`;
-    c.appendChild(box);
-  });
-
-  if(P && opts.stakeholders!==false){
-    const sh = el('div',''); sh.setAttribute('data-rv','');
-    sh.innerHTML = `<h3 style="margin:6px 0 12px">What stakeholders have said</h3>`+
-      P.stakeholders.map(x=>
-        `<div class="evrow ${x.tone}"><p>${x.q}</p>
-         <p class="evsrc">${x.who}</p></div>`).join('');
-    c.appendChild(sh);
-  }
-
-  if(P && opts.gaps!==false){
-    const gp = el('div','panel'); gp.setAttribute('data-rv','');
-    gp.style.borderColor = 'rgba(240,192,112,.4)';
-    gp.style.background = 'rgba(240,192,112,.06)';
-    gp.innerHTML = `<p class="kicker" style="color:#F6DCAC">Where the evidence runs out</p>
+        (s.submitList||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+     <div class="card"><p class="kicker">Instructions</p>
       <ul style="margin:0;padding-left:19px">${
-        P.gaps.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-    c.appendChild(gp);
-  }
-}
+        (s.rules||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  c.appendChild(g);
 
-RENDER.jordanintro = (s,c)=>{
-  head(s,c);
-  jordanEvidence(s,c);
+  /* One phone per pair is the single instruction most likely to be missed, so it
+     gets its own line at the largest size on the screen. */
+  const pair = el('div','onephone'); pair.setAttribute('data-rv','');
+  pair.innerHTML = `<div class="op-i" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M10.5 18.6h3"/></svg>
+    </div>
+    <div><b>One phone per pair</b>
+    <span>Jordan&rsquo;s full profile and the rating form are both on that phone.
+    Submit one response between you.</span></div>`;
+  c.appendChild(pair);
 
-  const st = el('div','grid g3'); st.setAttribute('data-rv','');
-  st.innerHTML = s.structure.map(x=>`<div class="card tint"><p class="kicker">${x[0]}</p>
-    <p class="big-num" style="font-size:30px">${x[1]}</p><p class="small"
-    style="margin:0">${x[2]}</p></div>`).join('');
-  c.appendChild(st);
-  const w = el('div','panel protect', `<p style="margin:0">${s.warn}</p>`);
-  w.setAttribute('data-rv',''); c.appendChild(w);
-  c.appendChild(el('p','src','Source: '+s.src));
-};
-
-/* --- Jordan pair activity
-   The rating form has been removed from this screen. Pairs rate on one phone;
-   the room screen holds the evidence they are reasoning about, readable from the
-   back, for the full fifteen minutes. The facilitator's own capture controls
-   remain, hidden from the projected display by `.fac-only`, for the case where
-   the phones are unavailable. */
-RENDER.worksheet = (s,c)=>{
-  head(s,c);
-
-  if(s.pairNote){
-    const pn = el('div','panel'); pn.setAttribute('data-rv','');
-    pn.style.borderColor = 'rgba(240,192,112,.45)';
-    pn.style.background = 'rgba(240,192,112,.08)';
-    pn.innerHTML = `<p class="kicker" style="color:#F6DCAC">How to work</p>
-      <p style="margin:0;font-size:20px;line-height:1.5">${s.pairNote}</p>`;
-    c.appendChild(pn);
+  if(s.minutes){
+    const tm = el('div','timecue'); tm.setAttribute('data-rv','');
+    tm.innerHTML = `<span class="tc-k">Time</span><span class="tc-v">${s.minutes}</span>
+      <span class="tc-n">The clock at the bottom of the screen is live.</span>`;
+    c.appendChild(tm);
   }
 
-  jordanEvidence(s,c,{history:false});
+  if(s.cue){
+    const q = el('div','panel discuss'); q.setAttribute('data-rv','');
+    q.innerHTML = `<p class="kicker">Calibration cue</p>
+      <p style="margin:0;font-size:19px;line-height:1.5">${s.cue}</p>`;
+    c.appendChild(q);
+  }
 
-  const ref = el('div','card tint'); ref.setAttribute('data-rv','');
-  ref.innerHTML = `<p class="kicker">The 1&ndash;4 scale &mdash; reference</p>
-    <div class="assy">${SCALE.map(l=>`<div class="pill">
-      <div class="pn">LEVEL ${l.n}</div><div class="pt">${l.label}</div>
-      <div class="pd">${l.deck}</div></div>`).join('')}</div>`;
-  c.appendChild(ref);
-
-  /* No-technology fallback only. Never rendered on the projected display. */
+  /* No-technology fallback only, and never rendered on the projected display. */
   const cap = el('div','fac-only'); cap.setAttribute('data-rv','');
   cap.innerHTML = '<h3>Facilitator capture &mdash; only if phones are unavailable</h3>';
   s.rows.forEach((r,ri)=>{
@@ -1562,14 +1506,10 @@ RENDER.jordanresults = (s,c)=>{
       barChart(['Yes','No','Not enough information'], Vote.counts(src,'12mo',3))+'</div>';
   c.appendChild(two);
 
-  /* Anonymous written responses, each behind its own facilitator reveal. */
-  [['ev','Evidence the room pointed to'],
-   ['need','Evidence the room said was still missing'],
-   ['case','The business cases, in the room&rsquo;s own words'],
-   ['dev','First development or utilization actions recommended']].forEach(([k,lab])=>{
-    c.appendChild(textReveal(s, src, k, lab));
-  });
-
+  /* The calibration challenge comes BEFORE the written responses. The room has
+     just seen how far apart it is; that is the moment the facilitators put their
+     own ratings up to be questioned, and the written reasoning lands better
+     afterwards as evidence in that argument rather than as a wall of quotes. */
   if(s.challenge){
     const ch = el('div','panel'); ch.setAttribute('data-rv','');
     ch.style.borderColor = 'rgba(240,192,112,.45)';
@@ -1578,6 +1518,14 @@ RENDER.jordanresults = (s,c)=>{
       <p style="margin:0;font-size:20px;line-height:1.5">${s.challenge}</p>`;
     c.appendChild(ch);
   }
+
+  /* Anonymous written responses, each behind its own facilitator reveal. */
+  [['ev','Evidence the room pointed to'],
+   ['need','Evidence the room said was still missing'],
+   ['case','The business cases, in the room&rsquo;s own words'],
+   ['dev','First development or utilization actions recommended']].forEach(([k,lab])=>{
+    c.appendChild(textReveal(s, src, k, lab));
+  });
 
   const w = el('div','panel protect'); w.setAttribute('data-rv','');
   w.innerHTML = `<p class="kicker">What the evidence supports</p>

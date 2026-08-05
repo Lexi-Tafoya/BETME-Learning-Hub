@@ -417,65 +417,46 @@ S({id:'leader-prep', ch:5, kind:'prose', min:4, who:'Lexi',
 
 /* ============================ CHAPTER 6 — JORDAN ======================== */
 
-S({id:'jordan-intro', ch:6, kind:'jordanintro', min:6, who:'Autumn',
-  eyebrow:'Executive Case Study',
-  title:'The evidence on Jordan',
-  intro:'Jordan is a Project Manager in Business Enablement, six years with the company and two years eight months in role. Everything on this screen is what her leader has on record. It is a realistic mixture: some of it is strong evidence, some of it is an impression that has been repeated often enough to sound like evidence, and some of what you need is simply not there.',
-  profile:JORDAN_PROFILE,
-  rows:JORDAN,
-  structure:[
-    ['In pairs','7 minutes','Rate all four competencies, name the evidence behind each rating and the evidence still missing, propose a classification, answer the 12-month question, and write your business case. One submission per pair.'],
-    ['At your table','8 minutes','Compare reasoning with the pair next to you. You are comparing evidence, not votes.'],
-    ['Full room','7 minutes','The distributions go up, then Autumn and Lexi present their own ratings — and you challenge them.']
-  ],
-  warn:'Jordan is <strong>fictional</strong>. No real employee is described here. The four competencies do <strong>not</strong> all land on the same level, and the classification is genuinely arguable &mdash; that is the point of the exercise, not a flaw in it.',
-  src:'Slide 24 &middot; Participant Guide pp. 3&ndash;4, expanded',
-  fac:{
-    purpose:'Gives leaders a case with enough depth to be genuinely difficult: strong evidence, ambiguous evidence, and real gaps, on a person whose four competency levels are deliberately not the same.',
-    keys:['Jordan is fictional. Say it once, clearly, at the start.',
-      'The four competencies do not land on the same level — anyone rating all four the same has almost certainly stopped reading.',
-      'Two of the stakeholder observations on record are impressions, not evidence. The room should notice.',
-      'Missing evidence is a real finding and a legitimate answer.',
-      'Jordan uses she/her throughout.'],
-    say:'This is Jordan. She is fictional — nobody in this room is being described, and nothing here is drawn from a real employee record. She is a Project Manager in Business Enablement, six years with the company, two years and eight months in this role. What you are about to see is what her leader actually has on record: a performance history, a timeline, what six stakeholders have said, and where the evidence runs out. Some of it is strong. Some of it is the kind of sentence that sounds like evidence and is not. I want you to read it the way you would read it in a calibration room — which means reading for what is missing as carefully as for what is there.',
-    delivery:'Reveal in order: the profile facts, the timeline, the four competencies with their evidence, then the stakeholder observations, then the gaps. Six minutes. Do not editorialise on which evidence is weak — the pairs need to find that themselves. Explain the pair structure BEFORE you open the activity.',
-    interaction:'Before you open the activity, ask one question: which of these six stakeholder comments would not survive being questioned? Take two answers. Do not resolve it — they will come back to it.',
-    tech:'Phones open automatically when you reach the rating screen. Say clearly: one phone per pair, one submission per pair. Otherwise you will get eighteen individual submissions and no paired discussion.',
-    watch:'The Development of Others evidence is deliberately parked on the 2/3 boundary — coaching has begun, unprompted, with an observable result, but over six months and observed by one leader. Expect the room to split there. Do not resolve it for them.',
-    note:'On the name: &ldquo;Jordan&rdquo; was also used in the evidence-rewrite exercise earlier. That repetition is in the approved source materials and has been preserved. It is the same fictional employee, which now makes the earlier exercise a deliberate warm-up rather than a coincidence.',
-    qa:[['What’s the correct classification for Jordan?',
-      'There is no single forced classification, and the evidence genuinely does not settle it. What we are examining is your reasoning and whether your evidence would survive being questioned.'],
-      ['Can we ask for more information?',
-      'Yes, and naming exactly what you would ask for is one of the strongest answers you can give. Just do not fill the gap with an assumption in the meantime.'],
-      ['Is Jordan based on a real person?',
-      'No. She is fictional, and deliberately so. Every project, date and figure was invented for this workshop.'],
-      ['Should we rate on potential or on what we see?',
-      'On observable evidence. Potential is the conclusion you draw from evidence — it is not itself evidence.']],
-    next:'Find your partner. One phone between you.'
-  }});
-
-/* The rating form itself is deliberately NOT on the projected screen. The room
-   screen holds Jordan's evidence, which is what pairs need to keep reading while
-   they work; the form lives on the phone in their hand. Putting both on the wall
-   was the old design and it meant the evidence scrolled away the moment anyone
-   needed to check a rating. */
-S({id:'jordan-worksheet', ch:6, kind:'worksheet', min:15, who:'Autumn',
-  eyebrow:'Calibration Point',
-  title:'Jordan &mdash; the evidence, while you work',
+S({id:'jordan-worksheet', ch:6, kind:'meetjordan', min:15, who:'Autumn',
+  eyebrow:'Meet Jordan',
+  title:'Meet Jordan',
   profile:JORDAN_PROFILE,
   rows:JORDAN,
   classes:CLASSES,
-  pairNote:'Work in pairs. <strong>One phone per pair, one submission per pair.</strong> The rating form is on your phone. This screen keeps Jordan’s evidence in front of you.',
-  src:'Participant Guide pp. 3&ndash;4, digitised',
+  task:'Working in pairs, review Jordan\u2019s full profile on one phone and make an evidence-based talent assessment.',
+  submitList:[
+    'A 1\u20134 rating for each of the four competencies',
+    'Evidence supporting each rating',
+    'Evidence still missing',
+    'A proposed classification',
+    'Whether Jordan could realistically be ready within approximately 12 months',
+    'Your business case',
+    'A recommended first development or utilization action'
+  ],
+  rules:[
+    'Work in pairs',
+    'Use <strong>one phone per pair</strong>',
+    'Review all evidence before rating',
+    'Separate observable evidence from impressions',
+    'Be prepared to defend your decisions',
+    'There may not be enough evidence to make every decision confidently'
+  ],
+  minutes:'7 minutes',
+  cue:'Be ready to defend every rating with specific evidence \u2014 and to challenge a rating you do not believe is supported. That is what a calibration conversation actually sounds like.',
+  src:'Slide 24 \u00b7 Participant Guide pp. 3\u20134',
   fac:{
-    purpose:'The centrepiece of the workshop. Pairs rate Jordan on their phone while the evidence stays readable on the room screen; results arrive anonymously and immediately.',
-    say:'Find a partner. One phone between the two of you — one submission per pair, because I want you arguing with each other, not typing in parallel. The rating form is on your phone. Jordan’s evidence stays on this screen the whole time, so you do not need to remember any of it. Seven minutes, starting now.',
-    delivery:'Open the activity, start the timer, and keep this screen on the evidence. At 7 minutes call table comparison. At 15 minutes bring the room back. Walk the room during the seven minutes and listen for pairs rating all four competencies the same — nudge those pairs to re-read.',
-    phases:'At 7 minutes: &ldquo;Submit if you have not. Now compare with the pair beside you — eight minutes. You are comparing evidence, not votes.&rdquo; At 15 minutes: &ldquo;Bring it back.&rdquo;',
-    interaction:'While pairs work, note two pairs who reasoned out loud well. You will want them by name-free reference in the debrief: &ldquo;one pair told me…&rdquo;',
-    tech:'One phone per pair. Say it twice — once when you open the activity, once at the two-minute mark. The submitted count on your Live controls should land near half the room size, not the full room.',
-    watch:'Written answers ARE displayed anonymously in the next scene when you choose to show them. The phone tells participants this before they type. Do not promise the room that written answers stay private — that is no longer true, and it was changed deliberately so the room can see each other’s reasoning.',
-    backup:'The Participant Guide worksheet, pages 3–4, is the paper instrument. Take a show of hands per competency and per classification and use the facilitator tally in Live controls.',
+    purpose:'The centrepiece of the workshop. The room screen holds only the task, the rules and the clock; Jordan\u2019s full dossier and the rating form live on one phone per pair.',
+    keys:['One phone per pair, one submission per pair.',
+      'The full case is on the phone \u2014 background, role history, four competencies, recorded observations, stakeholder comments and evidence gaps.',
+      'Pairs can move between the evidence and their answers without losing what they have typed.',
+      'Missing evidence is a legitimate answer.'],
+    say:'Find a partner. One phone between the two of you \u2014 one submission per pair, because I want you arguing with each other, not typing in parallel. Everything you need is on that phone: Jordan\u2019s background, her role history, the four competencies with what has actually been observed, what stakeholders have said, and where the evidence runs out. Read it before you rate anything. Seven minutes on the clock, starting now.',
+    delivery:'Open the activity, then press Start timer. Leave this screen up untouched for the whole seven minutes \u2014 it is the task and the clock, nothing else. Walk the room and listen. Pairs rating all four competencies the same have almost certainly not read past the first competency; nudge them back to the phone.',
+    phases:'At 5 minutes: \u201cTwo minutes.\u201d At 7 minutes: \u201cSubmit now if you have not.\u201d Then compare with the pair beside you for eight minutes \u2014 you are comparing evidence, not votes.',
+    interaction:'While pairs work, note two pairs who reasoned out loud well. You will want them in the debrief without naming anyone: \u201cone pair told me\u2026\u201d',
+    tech:'Say \u201cone phone per pair\u201d twice \u2014 when you open the activity and again at the two-minute mark. The submitted count in Live controls should land near half the room size, not the full room. Phones keep the pair\u2019s work through a refresh or a screen sleep.',
+    watch:'Jordan\u2019s dossier is deliberately NOT on this screen. If the room asks you to put the evidence up, point them back to the phone \u2014 reading it themselves is the exercise. Written answers ARE displayed anonymously in the next scene when you choose to show them, and the phone says so before anyone types.',
+    backup:'The Participant Guide worksheet, pages 3\u20134, is the paper instrument. Take a show of hands per competency and per classification and use the facilitator tally in Live controls.',
     next:'Bring the room back and put the distributions up.'
   }});
 

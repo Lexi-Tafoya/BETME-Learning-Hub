@@ -199,6 +199,86 @@ textarea:focus{outline:none; border-color:var(--edge-2); background:rgba(252,243
 .refitem .rbody .rsm{margin:9px 0 0; font-size:14px; color:var(--ink-3)}
 .refoot{margin:0; font-size:13.5px; line-height:1.5; color:var(--ink-3); text-align:center}
 
+/* ============================================================================
+   MEET JORDAN — the full case, on the phone
+   ==========================================================================
+   Every piece of evidence uses ONE card style. There is deliberately no colour
+   coding, no icon and no emphasis separating strong evidence from an impression,
+   because deciding which is which is the entire exercise. A green border on the
+   measurable statements and a red one on "I feel Jordan is a strong leader"
+   would hand the participant the answer before they had read the sentence.
+   ========================================================================= */
+.jd{padding-bottom:10px}
+.jd h2{
+  font:670 17px/1.3 var(--sans); letter-spacing:-.01em; margin:26px 0 12px;
+  padding-bottom:8px; border-bottom:1px solid var(--edge);
+}
+.jd section:first-of-type h2:first-of-type{margin-top:18px}
+.jdlede{font-size:15.5px; line-height:1.55; color:var(--ink-2); margin:0 0 16px}
+.jdlab{
+  font:700 10px/1 var(--sans); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-4); margin:18px 0 8px;
+}
+
+/* sticky section switcher — lets a pair jump between the evidence and their
+   answers without scrolling past the whole case each time */
+.jdnav{
+  position:sticky; top:44px; z-index:4; display:flex; gap:6px; overflow-x:auto;
+  padding:10px 0; margin:0 0 4px; background:var(--navy-900);
+  border-bottom:1px solid var(--edge); -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.jdnav::-webkit-scrollbar{display:none}
+.jdnav button{
+  flex:none; font:600 13.5px/1 var(--sans); font-family:inherit; cursor:pointer;
+  padding:11px 14px; min-height:42px; border-radius:99px; white-space:nowrap;
+  border:1px solid var(--edge); background:transparent; color:var(--ink-2);
+}
+.jdnav button.on{background:var(--cream); border-color:var(--cream); color:#101C4A;
+  font-weight:700}
+
+/* only the selected section is shown, so nothing is re-rendered on a tap */
+.jd section{display:none}
+.jd[data-tab="bg"] section[data-sec="bg"],
+.jd[data-tab="comp"] section[data-sec="comp"],
+.jd[data-tab="stake"] section[data-sec="stake"],
+.jd[data-tab="gaps"] section[data-sec="gaps"],
+.jd[data-tab="submit"] section[data-sec="submit"]{display:block}
+
+/* THE neutral evidence card. Used for observations, quotes and gaps alike. */
+.jdrow{
+  border:1px solid var(--edge); border-radius:12px; padding:14px 16px; margin:0 0 9px;
+  background:transparent;
+}
+.jdrow p{margin:0; font-size:16px; line-height:1.6; color:var(--cream)}
+.jdrow .jdwho{margin:8px 0 0; font-size:13.5px; color:var(--ink-3)}
+
+.jdfacts{display:grid; gap:9px; margin:0 0 6px}
+.jdfacts > div{border:1px solid var(--edge); border-radius:12px; padding:12px 15px}
+.jdfacts dt{
+  font:700 9.5px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-4); margin:0 0 5px;
+}
+.jdfacts dd{margin:0; font-size:16px; font-weight:600; color:var(--cream)}
+.jdul{margin:0 0 6px; padding:0; list-style:none}
+.jdul li{
+  border:1px solid var(--edge); border-radius:12px; padding:13px 15px; margin:0 0 8px;
+  font-size:15.5px; line-height:1.55; color:var(--cream);
+}
+.jdtl{margin:0}
+.jdtli{border:1px solid var(--edge); border-radius:12px; padding:13px 15px; margin:0 0 8px}
+.jdtli span{
+  display:block; font:700 11px/1 var(--mono); letter-spacing:.08em; color:var(--ink-3);
+  margin:0 0 6px;
+}
+.jdtli p{margin:0; font-size:15.5px; line-height:1.55; color:var(--cream)}
+.jdcomp{margin:0 0 30px}
+.jdscale{display:grid; gap:8px}
+.jdscale > div{border:1px solid var(--edge); border-radius:12px; padding:12px 15px}
+.jdscale b{display:block; font:700 15px/1 var(--sans); margin:0 0 5px}
+.jdscale span{font-size:14.5px; line-height:1.5; color:var(--ink-2)}
+.jdq{font:650 18px/1.35 var(--sans); margin:0 0 12px; letter-spacing:-.01em}
+
 @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 </style>
 </head>
@@ -215,8 +295,8 @@ textarea:focus{outline:none; border-color:var(--edge-2); background:rgba(252,243
 <div class="sticky" id="foot"></div>
 <div class="banner" id="banner" role="status" aria-live="polite"></div>
 
-<script src="content-a.js?v=3.4"></script>
-<script src="content-b.js?v=3.4"></script>
-<script src="join.js?v=3.4"></script>
+<script src="content-a.js?v=3.5"></script>
+<script src="content-b.js?v=3.5"></script>
+<script src="join.js?v=3.5"></script>
 </body>
 </html>

@@ -305,7 +305,7 @@
   LIVE.paintModal = paintModal;
 
   /* Which scenes accept phone responses. Mirrors fields() in join.js. */
-  var PHONE_KINDS = {poll:1, rank:1, quiz:1, sort:1, match:1, worksheet:1,
+  var PHONE_KINDS = {poll:1, rank:1, quiz:1, sort:1, match:1, meetjordan:1,
                      builder:1, bias:1, reflect:1};
   function takesPhone(s) {
     if (!s || s.noPhone) return false;

@@ -14,7 +14,7 @@
 
   Complements tools/test-live.js. That suite proves the server protocol is
   correct; this one proves the BROWSERS behave — that app.js actually renders
-  every one of the 33 scenes without throwing, that the projected display
+  every one of the 32 scenes without throwing, that the projected display
   mirrors the console reveal for reveal, and that a refresh mid-workshop lands
   back where it was rather than at scene one.
 
@@ -248,7 +248,7 @@ async function walkAllScenes(pw, dw) {
   section('EVERY SCENE, EVERY REVEAL');
   phase('walking all scenes');
   var total = pw.STEPS.length;
-  ok('the deck reports its full scene count', total === 33, 'got ' + total);
+  ok('the deck reports its full scene count', total === 32, 'got ' + total);
 
   var threw = [];
   var noReveals = [];
@@ -474,46 +474,113 @@ async function phoneChecks(pw) {
   ok('  with no written answer box',
     !p1.document.querySelector('textarea'));
 
-  // the Jordan pair submission
+  // the Jordan pair submission — dossier and form together on one phone
   await goto('jordan-worksheet');
-  await sleep(1000);
-  ok('the Jordan rating form opens on the phone',
-    await until(function () { return !!p1.document.querySelector('#send'); }, 8000));
-  ok('  and states plainly that it is one submission per pair',
-    !!p1.document.querySelector('.pairbar'));
-  ok('  and carries the full instructions',
-    !!p1.document.querySelector('.howto-p'));
-  ok('the rating form is NOT on the projected screen',
-    !win('fDisp').document.querySelector('.scene.on .ws .scale button'));
-  ok('  while Jordan’s evidence IS on the projected screen',
-    !!win('fDisp').document.querySelector('.scene.on .evrow'));
+  await sleep(1100);
+  ok('the Jordan case opens on the phone',
+    await until(function () { return !!p1.document.querySelector('.jd'); }, 8000));
+  ok('  it states one phone per pair', !!p1.document.querySelector('.pairbar'));
+  eq('  it offers all five sections',
+    p1.document.querySelectorAll('.jdnav button').length, 5);
 
-  // actually submit from both phones
-  async function fill(w) {
+  section('THE PROJECTED SCREEN STAYS CLEAN WHILE PAIRS WORK');
+  var dwj = win('fDisp').document;
+  ok('the task is on the projected screen', !!dwj.querySelector('.scene.on .onephone'));
+  ok('the time is on the projected screen', !!dwj.querySelector('.scene.on .timecue'));
+  ok('the dossier is NOT on the projected screen',
+    !dwj.querySelector('.scene.on .jdrow, .scene.on .evrow, .scene.on .dossier, .scene.on .tl'));
+  ok('the rating form is NOT on the projected screen',
+    !dwj.querySelector('.scene.on .scale button, .scene.on textarea'));
+  ok('no stakeholder quote appears on the projected screen',
+    !/re-baselined the ERP migration twice/.test(dwj.body.textContent));
+  ok('no evidence gap appears on the projected screen',
+    !/No formal people-leadership experience/.test(dwj.body.textContent));
+
+  section('EVIDENCE IS PRESENTED NEUTRALLY ON THE PHONE');
+  var rows = p1.document.querySelectorAll('.jd .jdrow');
+  ok('the phone renders the evidence as neutral cards', rows.length > 10,
+    'got ' + rows.length);
+  var styles = {};
+  Array.prototype.forEach.call(rows, function (r) {
+    var cs = p1.getComputedStyle(r);
+    styles[cs.borderTopColor + '|' + cs.backgroundColor] = 1;
+  });
+  eq('every evidence card uses the identical border and background',
+    Object.keys(styles).length, 1);
+  ok('no evidence card carries a strong/weak/incomplete class',
+    !p1.document.querySelector('.jd .hard, .jd .soft, .jd .strong, .jd .weak, .jd .ok, .jd .no'));
+  ok('no icon or tick marks any evidence as better or worse',
+    !p1.document.querySelector('.jd .jdrow svg'));
+  ok('the impression phrases are present in the case',
+    /I feel Jordan is a strong leader/.test(p1.document.body.textContent));
+  ok('  and are not visually highlighted',
+    !p1.document.querySelector('.jd mark, .jd .jdrow em, .jd .jdrow strong'));
+
+  section('ANSWERS SURVIVE NAVIGATION AND REFRESH');
+  // rate on the submit tab, then browse the evidence, then come back
+  p1.document.querySelector('.jdnav [data-t="submit"]').click();
+  await sleep(200);
+  var r0 = p1.document.querySelector('[data-jf="c0"]');
+  ok('a rating control is available to the pair', !!r0);
+  if (r0) {
+    r0.click();
+    await sleep(150);
+    ok('  tapping a rating marks it', r0.classList.contains('pick'));
+  }
+  var ta0 = p1.document.querySelector('.jd textarea');
+  if (ta0) {
+    ta0.value = 'Browser test — evidence typed before browsing the case.';
+    ta0.dispatchEvent(new p1.Event('input'));
+    await sleep(150);
+  }
+  p1.document.querySelector('.jdnav [data-t="comp"]').click();
+  await sleep(250);
+  p1.document.querySelector('.jdnav [data-t="stake"]').click();
+  await sleep(250);
+  p1.document.querySelector('.jdnav [data-t="submit"]').click();
+  await sleep(250);
+  ok('the rating is still selected after browsing the evidence',
+    !!p1.document.querySelector('[data-jf="c0"].pick'));
+  eq('the typed answer is still there',
+    p1.document.querySelector('.jd textarea').value,
+    'Browser test — evidence typed before browsing the case.');
+
+  // and after a full refresh of the phone
+  await load('fP1', '/join');
+  await sleep(1800);
+  p1 = win('fP1');
+  ok('the case reopens after a phone refresh',
+    await until(function () { return !!p1.document.querySelector('.jd'); }, 8000));
+  p1.document.querySelector('.jdnav [data-t="submit"]').click();
+  await sleep(300);
+  ok('  the rating survived the refresh',
+    !!p1.document.querySelector('[data-jf="c0"].pick'));
+  eq('  and so did the typed answer',
+    p1.document.querySelector('.jd textarea').value,
+    'Browser test — evidence typed before browsing the case.');
+
+  section('ONE SUBMISSION PER PAIR');
+  async function fillJordan(w) {
     var f = w.document;
-    ['c0', 'c1', 'c2', 'c3'].forEach(function (k) {
-      var b = f.querySelector('[data-f="' + k + '"]');
+    f.querySelector('.jdnav [data-t="submit"]').click();
+    await sleep(200);
+    ['c0', 'c1', 'c2', 'c3', 'cls', '12mo'].forEach(function (k) {
+      var b = f.querySelector('[data-jf="' + k + '"]');
       if (b) b.click();
     });
-    await sleep(120);
-    var cls = f.querySelector('[data-f="cls"]');
-    if (cls) cls.click();
-    await sleep(120);
-    var mo = f.querySelector('[data-f="12mo"]');
-    if (mo) mo.click();
-    await sleep(120);
-    Array.prototype.forEach.call(f.querySelectorAll('[data-t]'), function (t) {
+    await sleep(200);
+    Array.prototype.forEach.call(f.querySelectorAll('.jd textarea'), function (t) {
       t.value = 'Browser test response for ' + t.getAttribute('data-t') + '.';
       t.dispatchEvent(new w.Event('input'));
     });
-    await sleep(150);
+    await sleep(250);
     var send = f.querySelector('#send');
     if (send && !send.disabled) send.click();
-    await sleep(600);
+    await sleep(700);
   }
-  await fill(p1);
-  await fill(p2);
-  await sleep(700);
+  await fillJordan(p1);
+  await fillJordan(p2);
+  await sleep(800);
   var st = await state();
   ok('both pair submissions reached the server', st.submitted >= 2,
     'submitted=' + st.submitted);
@@ -525,9 +592,13 @@ async function phoneChecks(pw) {
 
   // results scene shows them, anonymously, on the facilitator's call
   await goto('jordan-results');
-  await sleep(700);
+  await sleep(900);
   ok('the distributions render from the real submissions',
     !!pw.document.querySelector('.scene.on .hist'));
+  ok('the results screen does not repeat the dossier',
+    !win('fDisp').document.querySelector('.scene.on .jdrow, .scene.on .dossier'));
+  ok('  and the calibration challenge cue is on it',
+    /raise your hand and challenge/i.test(pw.document.querySelector('.scene.on').textContent));
 }
 
 async function resilienceChecks() {
@@ -535,7 +606,7 @@ async function resilienceChecks() {
   phase('resilience');
 
   var pw = win('fPres');
-  var i = pw.STEPS.findIndex(function (s) { return s.id === 'jordan-intro'; });
+  var i = pw.STEPS.findIndex(function (s) { return s.id === 'jordan-worksheet'; });
   pw.gotoStep(i, 3);
   await sleep(700);
   var before = await state();

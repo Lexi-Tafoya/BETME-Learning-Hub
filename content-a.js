@@ -363,12 +363,12 @@ const INSTRUCT = {
   },
   'jordan-worksheet': {
     why:'This is the central exercise of the workshop: apply the framework to a realistic case with incomplete evidence, the way calibration actually works.',
-    device:'Work in pairs. <strong>One phone per pair, one submission per pair.</strong>',
+    device:'Work in pairs. <strong>One phone per pair, one submission per pair.</strong> Jordan\u2019s full profile is on that phone \u2014 background, role history, the four competencies, stakeholder comments and evidence gaps.',
     submit:'Four competency ratings, the evidence behind them, the evidence still missing, a proposed classification, the 12-month readiness call, your business case, and a first development action.',
     anon:'Anonymous. No participant names are shown or stored. Written answers are displayed anonymously only when the facilitator chooses to show them.',
     answer:'No forced correct classification. Your reasoning and your evidence are what is being examined.',
     time:'Seven minutes in pairs, then eight minutes comparing at your table.',
-    after:'The room’s distributions appear on screen, then the facilitators present their own ratings — some of which are deliberately not well supported.',
+    after:'The room\u2019s distributions appear on screen, then the facilitators present their own ratings \u2014 some of which are deliberately not well supported.',
     ready:'Be ready to defend your rating with specific evidence, and to challenge a rating you disagree with.'
   },
   'calibration-challenge': {

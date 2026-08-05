@@ -9,7 +9,7 @@
     "test": "node tools/test-live.js",
     "qr": "python make-qr.py"
   },
-  "version_note": "3.4 — live-session stability pass: server-authoritative state, full presenter/display mirroring, no transfer control, relocated session bar, rebuilt slides 17-20 and 24, Jordan executive case, empty-chair close.",
+  "version_note": "3.5 — Jordan hotfix: projected screen carries only the task, instructions, time and cue; the full dossier moved to the participant phone with neutral styling and preserved answers; duplicate dossier scene removed. 3.4 — live-session stability pass: server-authoritative state, full presenter/display mirroring, no transfer control, relocated session bar, rebuilt slides 17-20 and 24, Jordan executive case, empty-chair close.",
   "engines": { "node": ">=18" },
   "dependencies": {}
 }

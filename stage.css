@@ -801,3 +801,33 @@ html[data-role="presenter"] .acttimer{bottom:96px}
   .acttimer{padding:8px 15px; gap:9px}
   .acttimer .at-v{font-size:17px}
 }
+
+/* ============================================================================
+   MEET JORDAN — the projected activity screen (v3.5)
+   Only the task, the submission list, the rules, the clock and the cue. The
+   dossier itself is on the phone; this screen is what a pair glances up at.
+   ========================================================================= */
+.onephone{
+  display:flex; align-items:center; gap:18px; margin:20px 0;
+  padding:20px 24px; border-radius:18px;
+  border:1px solid rgba(240,192,112,.5); background:rgba(240,192,112,.09);
+}
+.onephone .op-i{flex:none; color:var(--warn)}
+.onephone .op-i svg{width:34px; height:34px; display:block}
+.onephone b{
+  display:block; font:700 clamp(21px,2.2vw,30px)/1.2 var(--sans); color:#F6DCAC;
+  margin:0 0 6px; letter-spacing:-.01em;
+}
+.onephone span{font:500 clamp(15px,1.4vw,19px)/1.5 var(--sans); color:var(--ink)}
+
+.timecue{
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin:20px 0;
+  padding:16px 24px; border-radius:16px; border:1px solid var(--edge-strong);
+  background:rgba(255,255,255,.02);
+}
+.timecue .tc-k{
+  font:700 10.5px/1 var(--sans); letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-3);
+}
+.timecue .tc-v{font:700 clamp(26px,2.6vw,38px)/1 var(--mono); color:var(--cream)}
+.timecue .tc-n{font:500 14.5px/1.4 var(--sans); color:var(--ink-3)}

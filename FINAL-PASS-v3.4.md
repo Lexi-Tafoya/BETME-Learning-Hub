@@ -216,3 +216,75 @@ handoffs and transitions get updated against it.
 
 **Hosting unchanged**, as instructed. Render, Auto-Deploy on commit. Health check
 now points at `/healthz`, which reports uptime, session code and current scene.
+
+---
+
+# v3.5 — Jordan activity hotfix
+
+The Jordan sequence was repetitive: one scene introduced the full dossier and the
+next scene put the same dossier up again while the pairs worked. The room read the
+same wall of evidence twice and then went looking for it on their phones anyway.
+
+**Two scenes became one.** `jordan-intro` is deleted. The surviving scene is
+retitled **Meet Jordan** — "Executive Case Study" is gone, and it reads as a
+talent-review case rather than an academic one. The step id stays
+`jordan-worksheet` on purpose: it keys every captured response, and renaming it
+would orphan the results scene.
+
+**The projected screen now carries only:** the task, what each pair must submit,
+the instructions, a full-width *one phone per pair* reminder, the 7-minute call
+with the live clock, and the calibration cue. No background, no timeline, no
+competency evidence, no stakeholder quotes, no evidence gaps, no rating form. It
+is what a pair glances up at, and it stays up untouched for the whole activity.
+
+**The phone now carries the whole case**, in five navigable sections: Jordan
+today with role history, responsibilities, timeline and performance history; the
+four competencies each with approved statement, recorded observations,
+stakeholder comments and evidence gap; the full stakeholder record; where the
+evidence runs out; and the pair submission form. A sticky switcher moves between
+them.
+
+**Answers survive everything.** The screen is built once and the sections are
+toggled with a class. Tapping a rating updates that control in place; typing
+saves on every keystroke; a state frame arriving because another pair submitted
+refreshes only the submit button. Nothing re-renders under a pair who is halfway
+through a sentence, and a phone refresh or a screen sleep restores both the
+ratings and the text.
+
+**No visual answer hints.** Every observation, quote and gap uses one identical
+neutral card — transparent background, same border, same type, same emphasis.
+The colour coding that used to mark evidence as strong, weak or incomplete is
+gone from the phone entirely, and no icon grades anything. "I feel", "people
+say", "Jordan seems" and "Jordan is always" are all still in the case,
+unhighlighted. Recognising them is the exercise; a red border would have done
+that work for the participant. The words *Evidence gap* still appear where the
+approved case names missing information, but as a plain label.
+
+**Results scene.** Unchanged except for ordering: the calibration challenge cue
+now comes immediately after the distributions and before the written responses,
+so the facilitators put their own ratings up at the moment the room can see how
+far apart it is. It shows the four rating distributions with median,
+classification spread, 12-month readiness spread, and the anonymous business
+cases, missing-evidence notes and recommended actions — each behind its own
+reveal. It does not repeat the dossier.
+
+## Files changed in the hotfix
+
+| File | Change |
+|---|---|
+| `content-b.js` | Deleted the `jordan-intro` scene. Rewrote `jordan-worksheet` as kind `meetjordan` — Meet Jordan, task, submission list, rules, time, cue, and rewritten presenter script. |
+| `content-a.js` | Updated the `jordan-worksheet` instruction block for the phone-held dossier. |
+| `app.js` | Removed `RENDER.jordanintro`, `RENDER.worksheet` and the `jordanEvidence` dossier helper. Added `RENDER.meetjordan` (instructions only). Section 8 renamed *Meet Jordan* and reduced to two scenes. Reordered the results scene so the challenge precedes the written responses. |
+| `join.js` | Added `screenJordan` — the five-section dossier plus submission form, built once, with in-place rating updates and `jdFoot` refreshing only the button. Spec keyed to `meetjordan`. |
+| `join.html` | Phone styles for the dossier: one neutral evidence card, sticky section switcher, no tone colours. |
+| `live.js` | `PHONE_KINDS` keyed to `meetjordan` so the activity still opens on phones. |
+| `stage.css` | Projected styles for the one-phone banner and the time cue. |
+| `tools/test-live.js` | 55 new assertions for the hotfix. Scene count now 32. |
+| `tools/browser-test.html` | Rewrote the Jordan phone checks: neutral styling verified by comparing computed styles across every evidence card, plus answer preservation across navigation and a full phone refresh. |
+
+## Scenes changed
+
+- **Removed:** `jordan-intro` (the duplicate dossier).
+- **Rebuilt:** `jordan-worksheet` — now *Meet Jordan*, instructions only on the
+  wall, full case on the phone.
+- **Reordered:** `jordan-results` — challenge cue before the written responses.
