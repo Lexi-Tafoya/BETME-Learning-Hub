@@ -6,8 +6,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "test": "node tools/test-live.js",
     "qr": "python make-qr.py"
   },
+  "version_note": "3.4 — live-session stability pass: server-authoritative state, full presenter/display mirroring, no transfer control, relocated session bar, rebuilt slides 17-20 and 24, Jordan executive case, empty-chair close.",
   "engines": { "node": ">=18" },
   "dependencies": {}
 }

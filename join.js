@@ -144,30 +144,27 @@ function fields(s) {
       });
       break;
     case 'worksheet':
+      // One joint response per PAIR, submitted from one phone. The wording says
+      // so on every screen, because a room that submits individually produces
+      // twice the responses and half the discussion.
       s.rows.forEach(function (r, i) {
         out.push({ k: 'c' + i, t: 'scale', q: r.comp, ev: r.ev });
       });
       out.push({ k: 'cls', t: 'choice', q: 'Proposed classification for Jordan', opts: s.classes });
       out.push({
         k: '12mo', t: 'choice',
-        q: 'Could the gaps realistically be addressed within 12 months?',
+        q: 'Could Jordan realistically be ready within approximately 12 months?',
         opts: ['Yes', 'No', 'Not enough information']
       });
-      out.push({ k: 'ev', t: 'text', q: 'Evidence supporting your ratings', opt: true,
-        hint: 'Do not include any real employee’s name.' });
-      out.push({ k: 'need', t: 'text', q: 'Additional evidence you would need before finalising',
-        opt: true });
-      out.push({ k: 'dev', t: 'text', q: 'The first development action you would recommend',
-        opt: true });
-      break;
-    case 'builder':
-      out.push({
-        k: 'chk', t: 'multi', pick: 0,
-        q: 'Before you could rate “' + s.vague + '”, what is missing?',
-        opts: s.checklist
-      });
-      out.push({ k: 'rewrite', t: 'text', q: 'Rewrite it as observable evidence', opt: true,
-        hint: 'Name the behaviour, how often, over what period, and what changed.' });
+      out.push({ k: 'ev', t: 'text', q: 'Evidence supporting your ratings',
+        hint: 'Displayed anonymously if the facilitators choose to show responses. '
+            + 'Do not include any real employee’s name.' });
+      out.push({ k: 'need', t: 'text', q: 'Evidence still missing before you would finalise this',
+        hint: 'Naming the gap is a legitimate answer, and a valuable one.' });
+      out.push({ k: 'case', t: 'text', q: 'Your business case for that classification',
+        hint: 'One or two sentences. This is what you would say in a calibration room.' });
+      out.push({ k: 'dev', t: 'text',
+        q: 'First recommended development or utilization action', opt: true });
       break;
     case 'bias':
       s.cases.forEach(function (c, i) {
@@ -197,12 +194,85 @@ function fields(s) {
       out.push({
         k: 'reflection', t: 'text', opt: true,
         q: s.question,
-        hint: 'Private. This is never shown on screen, never shared and never exported.'
+        hint: 'Anonymous. No name is attached to it. The facilitators may show responses on '
+            + 'screen to close the session.'
       });
       break;
   }
   return out;
 }
+
+/* ------------------------------------------------------------------ reference
+   Some sections open on phones but collect nothing: the 19 competency
+   definitions, and the seven evidence questions. Participants need these in
+   their hand while the room works, and nothing about them should be submitted,
+   broadcast or scored. Kept as an explicit screen rather than an activity with
+   the submit button hidden, so there is no path by which a stray tap sends
+   something to the room. */
+function isRef(s) { return !!(s && s.phoneRef); }
+
+function screenReference(s) {
+  var h = '';
+  h += '<p class="eyebrow">' + esc(stripTags(s.eyebrow || 'Reference')) + '</p>';
+  h += '<h1>' + esc(stripTags(s.title || '')) + '</h1>';
+
+  if (s.kind === 'explorer') {
+    h += '<p class="lede">Explore the competency definitions privately. Pay particular attention '
+      + 'to the four highlighted competencies; you will apply them to Jordan shortly. Use your '
+      + 'paper guide to record any notes or questions.</p>';
+    h += '<div class="refnote">Nothing on this screen is submitted. No employee name is entered '
+      + 'anywhere, and nothing you tap is shown to the room.</div>';
+    h += '<div class="jorkey"><b>Used in the Jordan case</b>'
+      + '<span>Accountable to Results &middot; Data Literacy &middot; Development of Others '
+      + '&middot; Strategic Awareness</span></div>';
+    h += '<div class="reflist">';
+    COMPETENCIES.forEach(function (row) {
+      var n = row[0], name = row[1], def = row[2];
+      var jor = JORDAN_COMPS.indexOf(n) > -1;
+      h += '<details class="refitem' + (jor ? ' jor' : '') + '">'
+        + '<summary><span class="rn">' + n + '</span><span class="rt">' + esc(name) + '</span>'
+        + (jor ? '<span class="rb">Jordan case</span>' : '') + '</summary>'
+        + '<div class="rbody"><p>' + esc(def) + '</p>'
+        + (typeof COMP_SLIDE18 !== 'undefined' && COMP_SLIDE18[n]
+            ? '<p class="rsm">In this session: ' + esc(COMP_SLIDE18[n]) + '</p>' : '')
+        + '</div></details>';
+    });
+    h += '</div>';
+  } else {
+    h += '<p class="lede">These are the seven questions that separate observable evidence from an '
+      + 'impression. Keep them open while the room works — tap any question to expand it.</p>';
+    h += '<div class="refnote">Reference only. There is no answer box on this screen and nothing '
+      + 'is submitted.</div>';
+    h += '<div class="reflist">';
+    (s.checklist || []).forEach(function (q, i) {
+      h += '<details class="refitem">'
+        + '<summary><span class="rn">' + (i + 1) + '</span><span class="rt">' + esc(q)
+        + '</span></summary>'
+        + '<div class="rbody"><p>' + esc(EV_Q_HELP[i] || '') + '</p></div></details>';
+    });
+    h += '</div>';
+  }
+  view.innerHTML = h;
+  foot.innerHTML = '<p class="refoot">Follow the main screen. This page stays available for the '
+    + 'rest of the session.</p>';
+}
+
+/* Short plain-language expansion of each of the seven evidence questions. */
+var EV_Q_HELP = [
+  'Name the action, not the impression. What would a camera have recorded? '
+    + '“Ran the meeting” is observable; “was engaged” is not.',
+  'Anchor it in time. A leader who cannot place an example is usually recalling the last '
+    + 'three weeks rather than the full period.',
+  'Once is an anecdote. Repeatedly is a capability. Say how many times, across how many '
+    + 'situations.',
+  'What changed as a result — for the customer, the project, the numbers, or another person’s '
+    + 'ability to work independently?',
+  'A single event tells you almost nothing about readiness. A pattern is what a classification '
+    + 'has to rest on.',
+  'Look for the counter-example on purpose. If you cannot think of one, you may not have looked.',
+  'Say the gap out loud. Missing evidence is a real finding, and it is a legitimate answer in a '
+    + 'calibration room.'
+];
 function required(s) {
   return fields(s).filter(function (f) { return !f.opt; }).map(function (f) { return f.k; });
 }
@@ -232,6 +302,9 @@ function render() {
 
   if (!ST.live) return screenWaiting('The session has not started yet',
     'Keep this page open. It will update by itself when the facilitators begin.');
+
+  // reference sections: open, but nothing is collected
+  if (s && isRef(s)) return screenReference(s);
 
   if (!s || !interactive(s)) {
     return screenWaiting('You’re connected',
@@ -285,10 +358,43 @@ function screenDone(s, closed) {
   };
 }
 
+/* The phone carries the fuller instructions: it is held at reading distance, so
+   it can afford the detail the projected screen cannot. Same eight questions,
+   same order as the main screen, so a participant looking between the two is
+   never comparing two different sets of rules. */
+var PHONE_INSTRUCT = [
+  ['why',    'Why you’re doing this'],
+  ['device', 'How to work'],
+  ['submit', 'What to submit'],
+  ['anon',   'Privacy'],
+  ['answer', 'Scoring'],
+  ['time',   'How long you have'],
+  ['after',  'What happens next'],
+  ['ready',  'Be ready to discuss']
+];
+
+function instructPanel(s) {
+  var x = s.instruct;
+  if (!x) return '';
+  var rows = PHONE_INSTRUCT.filter(function (r) { return x[r[0]]; });
+  if (!rows.length) return '';
+  return '<details class="howto-p" open><summary>How this works</summary><dl>'
+    + rows.map(function (r) {
+        return '<dt>' + r[1] + '</dt><dd>' + x[r[0]] + '</dd>';
+      }).join('')
+    + '</dl></details>';
+}
+
 function screenActivity(s) {
   var fs = fields(s), h = '';
   h += '<p class="eyebrow">' + esc(stripTags(s.eyebrow || 'Activity')) + '</p>';
   h += '<h1>' + esc(stripTags(s.title || '')) + '</h1>';
+  if (s.kind === 'worksheet') {
+    h += '<div class="pairbar"><b>Submit one response per pair.</b>'
+      + '<span>Work with your partner and send a single joint response from this phone. '
+      + 'No participant names are shown or stored.</span></div>';
+  }
+  h += instructPanel(s);
   if (s.note) h += '<p class="small" style="margin-bottom:20px">' + s.note + '</p>';
 
   fs.forEach(function (f, fi) {

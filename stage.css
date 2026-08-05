@@ -409,17 +409,50 @@ body{position:fixed; inset:0}
 /* ============================================================================
    LIVE SESSION LAYER  (only present on /presenter and /display)
    ========================================================================= */
-.livebar{
-  position:fixed; left:26px; bottom:96px; z-index:32; display:flex; align-items:center;
-  gap:9px; padding:9px 14px; border-radius:99px; background:rgba(12,20,54,.86);
+/* ---- session status: a collapsed pill, presenter only ----
+   This used to be a bar pinned across the lower third of BOTH the console and
+   the projected screen, sitting on top of the content the room was reading.
+   Two changes: it is never rendered on /display at all, and on the console it
+   collapses to a single status dot in the top-right, clear of the scene frame
+   and clear of the bottom navigation. Tap the dot to read code, participant
+   count and activity state; tap again to put it away. */
+.livepill{
+  position:fixed; top:62px; right:26px; z-index:32; display:flex; align-items:center;
+  gap:9px; padding:7px 12px; border-radius:99px; background:rgba(12,20,54,.72);
   border:1px solid var(--edge); backdrop-filter:blur(10px);
-  font:650 12px/1 var(--mono); color:var(--ink-2); font-variant-numeric:tabular-nums;
+  font:650 11.5px/1 var(--mono); color:var(--ink-2); font-variant-numeric:tabular-nums;
+  transition:.2s var(--ease); max-width:min(52vw,520px);
 }
-.livebar .ld{width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
-.livebar .ld.on{background:var(--ok)}
-.livebar .lv{white-space:nowrap}
-.livebar .lv + .lv::before{content:"·"; margin-right:9px; color:var(--ink-4)}
-.livebar.display{bottom:26px; left:26px}
+.livepill .lp-dot{
+  width:10px; height:10px; padding:0; border-radius:50%; background:var(--warn);
+  border:0; flex:none; cursor:pointer; box-shadow:0 0 0 3px rgba(232,143,143,.14);
+}
+.livepill .lp-dot.on{background:var(--ok); box-shadow:0 0 0 3px rgba(120,206,152,.14)}
+.livepill .lp-x{display:flex; align-items:center; gap:9px; overflow:hidden; white-space:nowrap}
+.livepill .lv{white-space:nowrap}
+.livepill .lv + .lv::before{content:"·"; margin-right:9px; color:var(--ink-4)}
+/* collapsed: the dot alone, so nothing competes with the presentation */
+.livepill.mini{padding:7px; gap:0; background:rgba(12,20,54,.5); border-color:transparent}
+.livepill.mini .lp-x{max-width:0; opacity:0}
+/* belt and braces: the projected screen never carries this overlay */
+body.displayrole .livepill{display:none !important}
+
+/* ---- a popup the facilitator opens for the ROOM, mirrored to the display ---- */
+.livemodal{
+  position:fixed; inset:0; z-index:60; background:rgba(6,10,28,.82); backdrop-filter:blur(9px);
+  display:grid; place-items:center; padding:5vh 5vw;
+  animation:lmIn .22s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes lmIn{from{opacity:0} to{opacity:1}}
+.lmbox{
+  width:min(1040px,100%); max-height:88vh; overflow:auto; border-radius:26px; padding:44px 48px;
+  background:var(--navy-800); border:1px solid var(--edge-strong);
+  box-shadow:0 40px 120px -30px rgba(0,0,0,.9);
+}
+.lmbox h2{font:700 clamp(26px,3vw,42px)/1.16 var(--serif); margin:8px 0 18px; color:var(--cream)}
+.lmbody{font:500 clamp(17px,1.5vw,22px)/1.6 var(--sans); color:var(--ink)}
+.lmbody p{margin:0 0 14px}
+.lmbody li{margin:0 0 9px}
 
 .fptoggle{
   position:fixed; right:26px; bottom:96px; z-index:33; cursor:pointer;
@@ -501,18 +534,32 @@ body.displayrole .drawer,
 body.displayrole .cue,
 body.displayrole #facBtn,
 body.displayrole #notesBtn,
+body.displayrole #clock,
 body.displayrole .fptoggle,
 body.displayrole .facpanel,
+body.displayrole .facwarn,
 body.displayrole .fac-only,
+body.displayrole .presenter-only,
+body.displayrole .room,
 body.displayrole .nav .go.sub,
 body.displayrole #nextBtn{display:none !important}
 body.displayrole .hint{display:none}
+/* Nothing that is written for the facilitator may render on the room screen,
+   including anything a future scene adds. Keyed off the role attribute as well
+   as the body class so it holds even before boot() has run. */
+html[data-role="display"] .drawer,
+html[data-role="display"] .fac-only,
+html[data-role="display"] .presenter-only,
+html[data-role="display"] .facpanel,
+html[data-role="display"] .fptoggle,
+html[data-role="display"] .facwarn{display:none !important}
 
 @media (max-width:760px){
-  .livebar{left:14px; bottom:88px; font-size:11px; padding:8px 11px}
+  .livepill{top:56px; right:14px; font-size:11px; padding:7px 10px; max-width:70vw}
   .fptoggle{right:14px; bottom:88px}
   .facpanel{right:14px; left:14px; width:auto; bottom:134px}
   .fp-g{grid-template-columns:1fr 1fr}
+  .lmbox{padding:26px 22px; border-radius:20px}
 }
 
 /* ============================================================================
@@ -561,3 +608,196 @@ body.displayrole .hint{display:none}
 .scene .card.tint li{font-size:16px; color:var(--ink)}
 .scene .card.tint .small,
 .scene .card .small{font-size:15px; color:var(--ink-2)}
+
+/* ============================================================================
+   FINAL PRODUCTION PASS
+   Instruction blocks, the rebuilt competency explorer, the evidence gallery,
+   the Jordan dossier, and the facilitator-led closing visualisation.
+   ========================================================================= */
+
+/* ---- "How this works": the same eight answers on every interactive scene ---- */
+.howto{
+  margin:18px 0 22px; padding:16px 20px 14px; border-radius:16px;
+  background:rgba(127,178,240,.055); border:1px solid rgba(127,178,240,.24);
+}
+.howto .kicker{color:#BAD6F7; margin:0 0 10px}
+.howto dl{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+  gap:10px 26px; margin:0;
+}
+.howto dt{
+  font:700 10.5px/1 var(--sans); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-3); margin:0 0 4px;
+}
+.howto dd{margin:0; font:500 15.5px/1.5 var(--sans); color:var(--ink)}
+body.displayrole .howto dd{font-size:17px}
+
+/* ---- competency explorer (slide 18) ---- */
+.exp-tools{display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 18px}
+.exp-tools .go.sub.on{background:var(--gold); border-color:var(--gold); color:#2A1D05}
+.compgrid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(216px,1fr)); gap:9px;
+  margin:0 0 20px;
+}
+.comptile{
+  display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;
+  padding:12px 14px; border-radius:13px; cursor:pointer; font-family:inherit;
+  border:1px solid var(--edge); background:var(--surface-2); color:var(--ink);
+  transition:.15s var(--ease); min-height:64px;
+}
+.comptile:hover{border-color:var(--cream); background:rgba(244,238,226,.07)}
+.comptile .ct-n{font:700 10.5px/1 var(--mono); color:var(--ink-4); letter-spacing:.1em}
+.comptile .ct-t{font:650 15px/1.3 var(--sans)}
+.comptile .ct-b{
+  margin-top:3px; font:700 9.5px/1 var(--sans); letter-spacing:.13em; text-transform:uppercase;
+  color:#A8E4C2; background:var(--ok-soft); border:1px solid rgba(111,207,155,.4);
+  padding:3px 7px; border-radius:99px;
+}
+.comptile.jor{border-color:rgba(111,207,155,.5); background:rgba(111,207,155,.075)}
+.comptile.sel{
+  border-color:var(--gold); background:rgba(217,178,106,.15);
+  box-shadow:0 0 0 1px var(--gold) inset;
+}
+.comptile.sel .ct-n{color:var(--gold)}
+.compdetail{margin:0 0 18px}
+.compempty{
+  padding:22px 24px; border-radius:16px; border:1px dashed var(--edge-strong);
+  color:var(--ink-3); font:500 16.5px/1.55 var(--sans); background:rgba(255,255,255,.015);
+}
+.compopen{
+  padding:26px 30px; border-radius:20px; border:1px solid var(--edge-strong);
+  background:var(--navy-800);
+}
+.compopen.jor{border-color:rgba(111,207,155,.45); background:rgba(111,207,155,.06)}
+.compopen h2{font:700 clamp(24px,2.5vw,36px)/1.18 var(--serif); margin:6px 0 12px; color:var(--cream)}
+.compopen .compdef{font:500 clamp(17px,1.6vw,22px)/1.55 var(--sans); color:var(--ink); margin:0}
+
+/* ---- evidence gallery (slide 20) ---- */
+.evgrid{display:grid; gap:12px; margin:6px 0 20px}
+.evcard{
+  padding:18px 22px; border-radius:16px; border:1px solid var(--edge);
+  background:var(--surface-2); cursor:pointer; transition:.15s var(--ease);
+  font-family:inherit; text-align:left; width:100%; color:var(--ink); display:block;
+}
+.evcard:hover{border-color:var(--cream)}
+.evcard.weak{border-color:rgba(232,143,143,.42); background:rgba(232,143,143,.055)}
+.evcard.strong{border-color:rgba(111,207,155,.42); background:rgba(111,207,155,.055)}
+.evcard .evq{font:500 clamp(17px,1.7vw,23px)/1.45 var(--serif); color:var(--cream); margin:0}
+.evcard .evtag{
+  display:inline-block; margin:0 0 9px; font:700 10px/1 var(--sans); letter-spacing:.14em;
+  text-transform:uppercase; padding:4px 9px; border-radius:99px;
+}
+.evcard.weak .evtag{color:#F3C0C0; background:var(--no-soft); border:1px solid rgba(232,143,143,.4)}
+.evcard.strong .evtag{color:#A8E4C2; background:var(--ok-soft); border:1px solid rgba(111,207,155,.4)}
+.evopen{margin:16px 0 0; padding:16px 0 0; border-top:1px solid var(--edge)}
+.evopen h4{
+  font:700 10.5px/1 var(--sans); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-3); margin:0 0 7px;
+}
+.evopen p{margin:0 0 13px; font:500 16px/1.55 var(--sans); color:var(--ink)}
+.evq7{display:grid; gap:7px; margin:0}
+.evq7 li{
+  list-style:none; display:flex; gap:10px; align-items:flex-start;
+  font:500 15px/1.45 var(--sans); color:var(--ink-2);
+}
+.evq7 li b{flex:none; width:19px; height:19px; border-radius:50%; display:grid;
+  place-items:center; font:700 10.5px/1 var(--mono); margin-top:1px}
+.evq7 li.yes b{background:var(--ok-soft); color:#A8E4C2; border:1px solid rgba(111,207,155,.5)}
+.evq7 li.no  b{background:var(--no-soft); color:#F3C0C0; border:1px solid rgba(232,143,143,.5)}
+.evq7 li.yes{color:var(--ink)}
+
+/* ---- Jordan dossier (slide 24) ---- */
+.dossier{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:11px;
+  margin:6px 0 20px;
+}
+.dossier .dcell{
+  padding:14px 17px; border-radius:14px; border:1px solid var(--edge);
+  background:rgba(255,255,255,.018);
+}
+.dossier .dcell p.kicker{margin:0 0 5px}
+.dossier .dcell p.dv{margin:0; font:600 16px/1.45 var(--sans); color:var(--ink)}
+.tl{margin:6px 0 20px; padding:0; list-style:none; border-left:2px solid var(--edge-strong)}
+.tl li{position:relative; padding:0 0 18px 22px; margin:0}
+.tl li:last-child{padding-bottom:0}
+.tl li::before{
+  content:""; position:absolute; left:-6px; top:6px; width:10px; height:10px;
+  border-radius:50%; background:var(--gold); box-shadow:0 0 0 3px var(--navy-900);
+}
+.tl .tly{font:700 11.5px/1 var(--mono); letter-spacing:.1em; color:var(--gold); display:block;
+  margin:0 0 5px}
+.tl .tlt{font:500 16.5px/1.55 var(--sans); color:var(--ink); margin:0}
+.evrow{
+  padding:15px 18px; border-radius:13px; margin:0 0 9px; border:1px solid var(--edge);
+  background:rgba(255,255,255,.016);
+}
+.evrow.soft{border-color:rgba(240,192,112,.35); background:rgba(240,192,112,.05)}
+.evrow.hard{border-color:rgba(111,207,155,.35); background:rgba(111,207,155,.05)}
+.evrow p{margin:0; font:500 16.5px/1.55 var(--sans); color:var(--ink)}
+.evrow .evsrc{margin:7px 0 0; font:500 13px/1.4 var(--sans); color:var(--ink-4)}
+.gapbox{border-color:rgba(240,192,112,.4)!important; background:rgba(240,192,112,.06)!important}
+
+/* ---- facilitator-led closing visualisation ---- */
+.viz{max-width:calc(100% - 40px); margin:0 auto}
+.viz .vline{
+  font:500 clamp(19px,2.1vw,29px)/1.62 var(--serif); color:var(--cream);
+  margin:0 0 22px; text-wrap:balance;
+}
+.viz .vmail{
+  margin:24px 0; padding:24px 28px; border-radius:16px; border:1px solid rgba(232,143,143,.42);
+  background:rgba(232,143,143,.07);
+}
+.viz .vmail p{
+  margin:0; font:500 clamp(19px,2vw,27px)/1.5 var(--sans); color:#F3C0C0; font-style:italic;
+}
+.viz .vq{
+  font:700 clamp(24px,2.8vw,40px)/1.28 var(--serif); color:var(--gold); text-align:center;
+  margin:30px 0 0;
+}
+.dimcue{
+  margin:16px 0 22px; padding:14px 18px; border-radius:14px;
+  border:1px solid rgba(217,178,106,.4); background:rgba(217,178,106,.08);
+}
+.dimcue p{margin:0; font:600 15px/1.5 var(--sans); color:#F6DCAC}
+
+/* ---- anonymous written responses, revealed on the facilitator's call ---- */
+.texts{display:grid; gap:9px; margin:6px 0 0}
+.texts .tq{
+  padding:14px 18px; border-radius:13px; border:1px solid var(--edge);
+  background:rgba(255,255,255,.018); font:500 16px/1.55 var(--serif); color:var(--ink);
+  margin:0;
+}
+.texts .tq::before{content:"\201C"}
+.texts .tq::after{content:"\201D"}
+.textsmeta{margin:12px 0 0; font:500 13.5px/1.5 var(--sans); color:var(--ink-4)}
+
+@media (max-width:900px){
+  .howto dl{grid-template-columns:1fr}
+  .compgrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+}
+
+/* ---- activity timer: audience-facing, so it DOES render on the display ----
+   Ticked locally in live.js from the last server frame, because the server only
+   broadcasts on change and a frozen clock on a projected screen is worse than
+   no clock at all. */
+.acttimer{
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:34;
+  display:flex; align-items:center; gap:12px; padding:10px 20px; border-radius:99px;
+  background:rgba(12,20,54,.9); border:1px solid rgba(111,207,155,.45);
+  backdrop-filter:blur(10px);
+}
+.acttimer .at-k{
+  font:700 9.5px/1 var(--sans); letter-spacing:.15em; text-transform:uppercase;
+  color:var(--ink-3);
+}
+.acttimer .at-v{
+  font:700 20px/1 var(--mono); color:var(--ok); font-variant-numeric:tabular-nums;
+}
+.acttimer.paused{border-color:rgba(240,192,112,.45)}
+.acttimer.paused .at-v{color:var(--warn)}
+/* the console's own nav sits at the bottom, so lift the timer clear of it there */
+html[data-role="presenter"] .acttimer{bottom:96px}
+@media (max-width:760px){
+  .acttimer{padding:8px 15px; gap:9px}
+  .acttimer .at-v{font-size:17px}
+}

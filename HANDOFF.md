@@ -49,7 +49,7 @@ Prints three links. Roles:
 | Route | Device | Notes |
 |---|---|---|
 | `/presenter` | Facilitator laptop | Open it and you are the presenter. First device in wins; a refresh keeps it. **No key, no token, no env var** (v3.3). |
-| `/presenter` (anyone after) | Any other device | Read-only: mirrors the presenter, controls hidden. Moves only when the facilitator presses **Transfer control**. |
+| `/presenter` (anyone after) | Any other device | Read-only: mirrors the presenter, controls hidden. Useful as a second set of notes. Control is never handed over during a session. |
 | `/display` | Room screen | Clean. Notes/controls hidden. Mirrors the presenter. |
 | `/join` | Phones | One scan, whole session. Same Wi-Fi as the laptop. |
 
@@ -171,7 +171,8 @@ chosen to keep the GitHub repo public with this understanding.
 
 ### 2. Facilitator key friction — removed entirely in v3.3
 Open `/presenter`, you are the presenter. Second console is read-only and mirrors
-the first; **Transfer control** hands it over. Protection is one-live-console, not
+the first, through refreshes and reconnections. Control is released only by the
+Administrative reset on the landing page, or a restart. Protection is one-live-console, not
 a secret, so `FAC_KEY` is no longer needed or mentioned. See `CHANGES-v3.md`.
 
 ### 3. Not yet done from round 2

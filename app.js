@@ -25,7 +25,7 @@ const SECTIONS = [
   {n:9, t:'Calibration',                steps:['calibration-intro','calibration-what','calibration-challenge']},
   {n:10,t:'Development and Utilization',steps:['plans','plans-match','break']},
   {n:11,t:'Future Considerations',      steps:['future','future-rank']},
-  {n:12,t:'Coming Full Circle',steps:['confidence-close','reflection','appendix']}
+  {n:12,t:'Coming Full Circle',steps:['empty-chair','confidence-close','reflection','appendix']}
 ];
 
 /* spatial layout — a serpentine journey across the world canvas */
@@ -60,6 +60,58 @@ function load(){
     State.votes = d.votes||{}; State.notes = d.notes||{}; State.done = d.done||{};
     State.clockMs = d.clockMs||0;
   }catch(_){}
+}
+
+/* ---------------------------------------------------------------- UI mirror
+   Everything the ROOM can see change without the scene or the reveal index
+   changing lives here: an expanded competency definition, an opened
+   classification card, a revealed teaching point, a selected filter, the
+   written responses the facilitator chose to show.
+
+   Why a store rather than DOM events: the projected display is a second
+   browser. It cannot observe a click on the presenter's laptop, so anything
+   that is only held in the DOM is invisible to it — which is precisely why
+   reveals, popups and expanded definitions used to appear on the console and
+   not on the screen the room was watching. Routing them through one
+   serialisable object means the display mirrors them for free, and a refresh
+   on either side rebuilds them from the server.
+
+   Keys are `stepId::something` so they stay stable across a re-render.        */
+const UI = {
+  s: {},
+  applying: false,                 // guard: applying remote state must not re-post
+  get(k, d){ const v = UI.s[k]; return v === undefined ? d : v; },
+  set(k, v){
+    if(UI.applying) return;
+    if(UI.s[k] === v) return;
+    UI.s[k] = v;
+    UI.push();
+  },
+  toggle(k){ UI.set(k, !UI.get(k)); },
+  /** Replace the whole store from the server, then repaint the current scene. */
+  adopt(o){
+    UI.s = (o && typeof o === 'object') ? o : {};
+    UI.applying = true;
+    try { applyUI(); } finally { UI.applying = false; }
+  },
+  push(){ if(window.LIVE && window.LIVE.onUI) window.LIVE.onUI(UI.s); }
+};
+
+/** Re-apply the mirrored interaction state onto the current scene's DOM. */
+function applyUI(){
+  const s = step();
+  if(!s || !s._in) return;
+  $$('details', s._in).forEach((d,idx)=>{ d.open = !!UI.get(s.id+'::d'+idx); });
+  if(typeof s._applyUI === 'function') s._applyUI();
+}
+
+/** Give every <details> in a freshly rendered scene a mirrored open state. */
+function wireDetails(s, c){
+  $$('details', c).forEach((d,idx)=>{
+    const k = s.id+'::d'+idx;
+    d.open = !!UI.get(k);
+    d.addEventListener('toggle', ()=> UI.set(k, d.open));
+  });
 }
 
 /* ---------------------------------------------------------------- vote store
@@ -300,10 +352,18 @@ function goto(i, rv){
   drawer();
   save();
   healScenes();
-  // live session hook: the presenter pushes the stage so /display follows.
-  // Absent in standalone mode, so this is a no-op there.
-  if (window.LIVE && window.LIVE.onStage) window.LIVE.onStage(State.i, State.rv);
+  liveStage();
   if(changed) document.title = s.title ? stripTags(s.title)+' — TMR' : 'TMR Learning Experience';
+}
+
+/* The single place the live layer is told where the room is.
+   It must be called from EVERY path that changes what the audience sees —
+   scene change, forward reveal, back navigation, map toggle. A reveal that
+   updates State.rv and repaints locally without coming through here is a
+   reveal the projected display never learns about, which was the original
+   synchronisation defect. */
+function liveStage(){
+  if(window.LIVE && window.LIVE.onStage) window.LIVE.onStage(State.i, State.rv);
 }
 function stripTags(h){
   const d = el('div','',String(h));
@@ -328,13 +388,17 @@ function skipEmpty(dir){
 function next(){
   if(State.map){ toggleMap(false); return; }
   const total = revealCount();
-  if(State.rv < total){ State.rv++; skipEmpty(1); paintReveals(); save(); chrome(); return; }
+  if(State.rv < total){
+    State.rv++; skipEmpty(1); paintReveals(); save(); chrome(); liveStage(); return;
+  }
   if(State.i < STEPS.length-1) goto(State.i+1, 1);
   else flash('<b>That is the end of the experience.</b> Thank you.');
 }
 function back(){
   if(State.map){ toggleMap(false); return; }
-  if(State.rv > 1){ State.rv--; skipEmpty(-1); paintReveals(); save(); chrome(); return; }
+  if(State.rv > 1){
+    State.rv--; skipEmpty(-1); paintReveals(); save(); chrome(); liveStage(); return;
+  }
   if(State.i > 0) goto(State.i-1, -1);
 }
 function toggleMap(force){
@@ -342,6 +406,7 @@ function toggleMap(force){
   $('#viewport').classList.toggle('mapview', State.map);
   $('#mapBtn').classList.toggle('on', State.map);
   camera(); chrome();
+  UI.set('__map', !!State.map);
 }
 
 /* Scene opacity relies on a CSS transition, and a transition only advances while
@@ -537,6 +602,7 @@ function roomCapture(stepId, key, labels, onChange){
 function render(s){
   const c = s._in;
   c.innerHTML = '';
+  s._applyUI = null;
   const R = RENDER[s.kind] || RENDER.prose;
   R(s, c);
   // everything that should reveal progressively is tagged by the renderer;
@@ -544,6 +610,8 @@ function render(s){
   if(!$$('[data-rv]',c).length){
     Array.from(c.children).forEach(n=> n.setAttribute('data-rv',''));
   }
+  // every expandable panel in the scene now mirrors to the projected display
+  wireDetails(s, c);
 }
 /* The headline (eyebrow + title) is always ONE reveal — landing on a scene should
    never show a blank frame. Supporting copy reveals after it. */
@@ -556,6 +624,12 @@ function head(s, c, opts){
   if(s.sub && opts.sub!==false){ const p = el('p','lede', s.sub); p.setAttribute('data-rv','');
     c.appendChild(p); }
   if(s.intro){ const p = el('p','lede', s.intro); p.setAttribute('data-rv',''); c.appendChild(p); }
+  // Instructions belong immediately under the headline on every interactive
+  // scene, before the first thing the room is asked to do. Placed here rather
+  // than in each renderer so no interactive scene can be added later without
+  // one. Scenes that need it lower down pass {instruct:false} and append it
+  // themselves.
+  if(s.instruct && opts.instruct!==false) c.appendChild(instructBlock(s.instruct));
 }
 
 const RENDER = {};
@@ -701,6 +775,42 @@ RENDER.plans = (s,c)=>{
 function discussBlock(lines){
   const d = el('div','panel discuss');
   d.innerHTML = `<p class="kicker">Discussion</p><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`;
+  d.setAttribute('data-rv','');
+  return d;
+}
+
+/* ---------------------------------------------------------------- instructions
+   Every interactive scene now answers the same eight questions before the room
+   is asked to do anything: why they are doing it, which device, what they
+   submit, whether it is anonymous, whether there is a right answer, how long
+   they have, what happens next, and what to be ready to discuss.
+
+   This exists because "the facilitator will explain it" is not a design. In a
+   room of executives the cost of an unclear instruction is not confusion, it is
+   silence — people opt out rather than ask. Kept deliberately terse: this
+   renders on a projected screen, and the participant phone carries the longer
+   version where one is needed.
+
+   `s.instruct` accepts any subset. Order is fixed so the room learns where to
+   look. Language is executive by convention — Leadership Decision, Framework
+   Application, Evidence Review, Calibration Point, Executive Prioritization,
+   Leadership Reflection — and never Quiz, Game or exercise.                   */
+const INSTRUCT_ROWS = [
+  ['why',    'Why'],
+  ['device', 'How'],
+  ['submit', 'Submit'],
+  ['anon',   'Privacy'],
+  ['answer', 'Scoring'],
+  ['time',   'Time'],
+  ['after',  'Next'],
+  ['ready',  'Be ready to']
+];
+function instructBlock(x){
+  const rows = INSTRUCT_ROWS.filter(([k])=> x[k]);
+  const d = el('div','howto');
+  d.innerHTML = `<p class="kicker">How this works</p>
+    <dl>${rows.map(([k,lab])=>
+      `<div><dt>${lab}</dt><dd>${x[k]}</dd></div>`).join('')}</dl>`;
   d.setAttribute('data-rv','');
   return d;
 }
@@ -972,44 +1082,104 @@ RENDER.match = (s,c)=>{
 };
 
 /* --- competency explorer */
+/* --- competency explorer (slide 18)
+   Rebuilt around a question the room can answer rather than a list they scroll.
+   Three things had to become true: the screen says WHY the competencies are on
+   it before Jordan appears, the four competencies that carry the case are
+   visibly marked, and selecting one puts its approved definition up large
+   enough to read from the back of the room.
+
+   Selection and highlight state go through the UI mirror, so the competency the
+   facilitator opens is the competency the room sees — the previous version
+   expanded it on the console only. */
 RENDER.explorer = (s,c)=>{
-  head(s,c);
-  const tools = el('div',''); tools.setAttribute('data-rv','');
-  tools.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 18px';
-  const inp = el('input'); inp.type='text'; inp.placeholder='Search the 19 competencies…';
-  inp.style.cssText='flex:1;min-width:200px';
-  const f1 = el('button','go sub','All 19');
-  const f2 = el('button','go sub','Named today');
-  const f3 = el('button','go sub','Used on Jordan');
-  tools.appendChild(inp); tools.appendChild(f1); tools.appendChild(f2); tools.appendChild(f3);
-  c.appendChild(tools);
-  const list = el('div',''); list.setAttribute('data-rv',''); c.appendChild(list);
-  let filter = 'all';
-  function paint(){
-    const q = inp.value.trim().toLowerCase();
-    const rows = COMPETENCIES.filter(([n,name,def])=>{
-      if(filter==='today' && TODAY_COMPS.indexOf(n)<0) return false;
-      if(filter==='jordan' && JORDAN_COMPS.indexOf(n)<0) return false;
-      return !q || name.toLowerCase().includes(q) || def.toLowerCase().includes(q);
-    });
-    list.innerHTML = rows.length? rows.map(([n,name,def])=>{
-      const tags = [];
-      if(TODAY_COMPS.indexOf(n)>-1) tags.push('<span class="chip info">Named today</span>');
-      if(JORDAN_COMPS.indexOf(n)>-1) tags.push('<span class="chip ok">Used on Jordan</span>');
-      return `<details class="exp"><summary><span class="exp-n">${n}</span>${name}
-        ${tags.join(' ')}</summary><div class="body">
-        <h4>Level 1 &mdash; foundational behaviour</h4><p>${def}</p>
-        ${COMP_SLIDE18[n]?`<h4>In today&rsquo;s session</h4><p>${COMP_SLIDE18[n]}</p>`:''}
-        </div></details>`;
-    }).join('') : '<div class="chart-empty">No competency matches that search.</div>';
-    $('#expCount',c).textContent = rows.length+' of 19 shown';
+  head(s,c,{instruct:false});
+
+  if(s.why){
+    const w = el('div','panel'); w.setAttribute('data-rv','');
+    w.innerHTML = `<p class="kicker">Why this matters now</p>
+      <p style="margin:0;font-size:19px;line-height:1.55">${s.why}</p>`;
+    c.appendChild(w);
   }
-  const cnt = el('p','small'); cnt.id='expCount'; cnt.setAttribute('data-rv','');
-  c.appendChild(cnt);
-  [[f1,'all'],[f2,'today'],[f3,'jordan']].forEach(([b,k])=>
-    b.addEventListener('click',()=>{ filter=k; paint(); }));
-  inp.addEventListener('input',paint);
+  if(s.instruct) c.appendChild(instructBlock(s.instruct));
+
+  const KEY_SEL  = s.id+'::sel';
+  const KEY_ONLY = s.id+'::only';
+
+  const tools = el('div','exp-tools'); tools.setAttribute('data-rv','');
+  const bAll  = el('button','go sub','Show all 19');
+  const bJor  = el('button','go sub','Highlight the four used on Jordan');
+  tools.appendChild(bAll); tools.appendChild(bJor);
+  c.appendChild(tools);
+
+  const grid = el('div','compgrid'); grid.setAttribute('data-rv','');
+  c.appendChild(grid);
+
+  const detail = el('div','compdetail'); detail.setAttribute('data-rv','');
+  c.appendChild(detail);
+
+  function isJordan(n){ return JORDAN_COMPS.indexOf(n) > -1; }
+
+  function paint(){
+    const only = !!UI.get(KEY_ONLY);
+    const sel  = UI.get(KEY_SEL, 0);
+    const rows = COMPETENCIES.filter(([n])=> !only || isJordan(n));
+
+    grid.innerHTML = rows.map(([n,name])=>{
+      const cls = ['comptile'];
+      if(isJordan(n)) cls.push('jor');
+      if(sel === n)   cls.push('sel');
+      return `<button class="${cls.join(' ')}" data-n="${n}">
+        <span class="ct-n">${n}</span><span class="ct-t">${name}</span>
+        ${isJordan(n)?'<span class="ct-b">Jordan case</span>':''}</button>`;
+    }).join('');
+
+    $$('[data-n]',grid).forEach(b=>{
+      b.addEventListener('click',()=>{
+        const n = Number(b.getAttribute('data-n'));
+        UI.set(KEY_SEL, UI.get(KEY_SEL,0) === n ? 0 : n);
+      });
+    });
+
+    bAll.classList.toggle('on', !only);
+    bJor.classList.toggle('on', only);
+
+    const row = COMPETENCIES.filter(x=>x[0]===sel)[0];
+    if(!row){
+      detail.innerHTML = `<div class="compempty">Select any competency to show its approved
+        definition. ${only? 'These four are the competencies used in the Jordan case.'
+        : 'The four marked <b>Jordan case</b> are the ones you will apply shortly.'}</div>`;
+    } else {
+      const [n,name,def] = row;
+      detail.innerHTML = `<div class="compopen${isJordan(n)?' jor':''}">
+        <p class="kicker">Competency ${n}${isJordan(n)?' &middot; used in the Jordan case':''}</p>
+        <h2>${name}</h2>
+        <p class="compdef">${def}</p>
+        ${COMP_SLIDE18[n]?`<p class="small" style="margin:14px 0 0">In this session:
+          ${COMP_SLIDE18[n]}</p>`:''}
+      </div>`;
+    }
+  }
+
+  bAll.addEventListener('click',()=> UI.set(KEY_ONLY, false));
+  bJor.addEventListener('click',()=> UI.set(KEY_ONLY, true));
   paint();
+  s._applyUI = paint;          // remote state repaints without a full re-render
+
+  if(s.jordanNote){
+    const jn = el('div','note', s.jordanNote); jn.setAttribute('data-rv','');
+    c.appendChild(jn);
+  }
+
+  if(s.reflect){
+    const r = el('div','panel protect'); r.setAttribute('data-rv','');
+    r.innerHTML = `<p class="kicker">Leadership Reflection &middot; private</p>
+      <p style="margin:0 0 8px;font-size:20px;line-height:1.5">${s.reflect}</p>
+      <p class="small" style="margin:0">Nothing is submitted and no name is entered anywhere.
+      Use your paper guide if you want to write it down.</p>`;
+    c.appendChild(r);
+  }
+
   const note = el('div','note','Behavioral competencies are the primary focus for development '+
     'planning in TMR. Technical competencies are evaluated, but development plans should remain '+
     'focused on behavioral growth.');
@@ -1030,66 +1200,166 @@ RENDER.scale = (s,c)=>{
     det.innerHTML = `<summary><span class="exp-n">${l.n}</span>${l.label}</summary>
       <div class="body">
         <h4>On the scale</h4><p>${l.deck}</p>
-        <h4>Quick Reference Guide &mdash; the fuller explanation of the same level</h4><p>${l.qrg}</p>
+        <h4>What this looks like in practice</h4><p>${l.qrg}</p>
         <h4>Worked example &mdash; Strategic Awareness at this level</h4><p>${l.sa}</p>
         <div class="note" style="margin:12px 0 0">${l.remember}</div></div>`;
     det.addEventListener('toggle',()=>{ if(det.open)
       $(`.pill[data-l="${l.n}"]`,strip).classList.add('in'); });
     c.appendChild(det);
   });
-  const note = el('div','note','The concise wording on the strip is what the room sees. The Quick '+
-    'Reference Guide wording is the expanded explanation of the same four levels &mdash; they are '+
-    'not competing scales.');
+  /* The internal note explaining that the strip wording and the Quick Reference
+     Guide wording are the same scale has been removed from the audience view.
+     It was written for the facilitators, and on a projected screen it reads as
+     a caveat about the framework rather than as an aid. The 1–4 scale itself is
+     unchanged. */
+  const note = el('div','note','Every rating on this scale must be supported by observable '+
+    'evidence. Expand any level to see the full description and a worked example.');
   note.setAttribute('data-rv',''); c.appendChild(note);
   c.appendChild(el('p','src','Source: '+s.src));
 };
 
-/* --- evidence builder */
+/* --- evidence gallery (slide 20)
+   Five statements, worst to best, each openable to show what is observable,
+   what is measurable, what is still missing, and which of the seven questions
+   it actually answers. Open/closed state is mirrored, so the statement the
+   facilitator opens is the statement the room is looking at. */
+RENDER.evgallery = (s,c)=>{
+  head(s,c,{instruct:false});
+
+  if(s.why){
+    const w = el('div','panel'); w.setAttribute('data-rv','');
+    w.innerHTML = `<p class="kicker">Why this matters now</p>
+      <p style="margin:0;font-size:19px;line-height:1.55">${s.why}</p>`;
+    c.appendChild(w);
+  }
+  if(s.instruct) c.appendChild(instructBlock(s.instruct));
+
+  // the seven questions, and what strong evidence contains
+  const g = el('div','grid g2'); g.setAttribute('data-rv','');
+  g.innerHTML =
+    `<div class="card"><p class="kicker">Strong evidence includes</p>
+      <ul style="margin:0;padding-left:19px">${
+        (s.criteria||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+     <div class="card tint"><p class="kicker">The seven evidence questions</p>
+      <ol style="margin:0;padding-left:19px">${
+        (s.checklist||[]).map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  c.appendChild(g);
+
+  if(s.ask){
+    const a = el('p','lede', s.ask); a.setAttribute('data-rv',''); c.appendChild(a);
+  }
+
+  const wrap = el('div','evgrid'); wrap.setAttribute('data-rv','');
+  c.appendChild(wrap);
+
+  function paint(){
+    const open = UI.get(s.id+'::ev', -1);
+    wrap.innerHTML = (s.statements||[]).map((x,i)=>{
+      const isOpen = open === i;
+      const ans = x.answers || [];
+      return `<button class="evcard ${x.tone}" data-ev="${i}">
+        <span class="evtag">${x.tag}</span>
+        <p class="evq">&ldquo;${x.t}&rdquo;</p>
+        ${isOpen ? `<div class="evopen">
+          <h4>What is observable</h4><p>${x.obs}</p>
+          <h4>What is measurable</h4><p>${x.meas}</p>
+          <h4>What is still missing</h4><p>${x.miss}</p>
+          <h4>Which of the seven questions this answers</h4>
+          <ul class="evq7">${(s.checklist||[]).map((q,qi)=>
+            `<li class="${ans.indexOf(qi)>-1?'yes':'no'}">
+              <b>${ans.indexOf(qi)>-1?'&#10003;':'&mdash;'}</b><span>${q}</span></li>`).join('')}</ul>
+          <h4>Why this one matters</h4><p style="margin:0">${x.why}</p>
+        </div>` : ''}
+      </button>`;
+    }).join('');
+    $$('[data-ev]',wrap).forEach(b=>{
+      b.addEventListener('click',()=>{
+        const i = Number(b.getAttribute('data-ev'));
+        UI.set(s.id+'::ev', UI.get(s.id+'::ev',-1) === i ? -1 : i);
+      });
+    });
+  }
+  paint();
+  s._applyUI = paint;
+
+  if(s.note){ const n = el('div','note', s.note); n.setAttribute('data-rv',''); c.appendChild(n); }
+  c.appendChild(el('p','src','Source: '+s.src));
+};
+
+/* --- evidence builder, run at the whiteboard
+   The individual textarea was removed on purpose: this is now a shared exercise
+   led from the front, and a room of executives typing separately produced far
+   weaker sentences than the same room arguing about one sentence out loud. What
+   remains is the checklist the facilitator walks, and the reveal. */
 RENDER.builder = (s,c)=>{
   head(s,c);
+  if(s.purposeLine){
+    const p = el('div','panel'); p.setAttribute('data-rv','');
+    p.innerHTML = `<p class="kicker">The purpose of this activity</p>
+      <p style="margin:0;font-size:19px;line-height:1.55">${s.purposeLine}</p>`;
+    c.appendChild(p);
+  }
   const v = el('div','card'); v.setAttribute('data-rv','');
   v.innerHTML = `<p class="kicker">The statement as written</p>
     <p class="bigq two" style="margin:0">&ldquo;${s.vague}&rdquo;</p>`;
   c.appendChild(v);
   const ask = el('p','lede', s.ask); ask.setAttribute('data-rv',''); c.appendChild(ask);
 
+  /* The seven questions, marked off as the room works them. Mirrored, so the
+     display shows the same marks the facilitator is making. */
   const chk = el('div','opts'); chk.setAttribute('data-rv','');
-  const picked = new Set();
+  function paintChk(){
+    const picked = UI.get(s.id+'::chk', []) || [];
+    $$('.opt',chk).forEach((b,i)=> b.classList.toggle('pick', picked.indexOf(i)>-1));
+    const cn = $('#bCount',c);
+    if(cn) cn.textContent = picked.length+' of 7 marked as missing';
+  }
   s.checklist.forEach((q,i)=>{
     const b = el('button','opt');
     b.innerHTML = `<span class="mk">${i+1}</span><span>${q}</span>`;
     b.addEventListener('click',()=>{
-      if(picked.has(i)){ picked.delete(i); b.classList.remove('pick'); }
-      else { picked.add(i); b.classList.add('pick'); }
-      $('#bCount',c).textContent = picked.size+' of 7 selected';
+      const cur = (UI.get(s.id+'::chk', []) || []).slice();
+      const at = cur.indexOf(i);
+      if(at>-1) cur.splice(at,1); else cur.push(i);
+      UI.set(s.id+'::chk', cur);
+      paintChk();
     });
     chk.appendChild(b);
   });
   c.appendChild(chk);
-  const cnt = el('p','small','0 of 7 selected'); cnt.id='bCount'; cnt.setAttribute('data-rv','');
+  const cnt = el('p','small','0 of 7 marked as missing'); cnt.id='bCount';
+  cnt.setAttribute('data-rv','');
   c.appendChild(cnt);
+  paintChk();
 
-  const f = el('div','field'); f.setAttribute('data-rv','');
-  f.innerHTML = `<label>Now rebuild it as observable evidence</label>
-    <p class="hint">Name the behaviour, how often, over what period, and what changed as a result.</p>`;
-  const ta = el('textarea'); ta.placeholder = 'Rewrite the statement…';
-  ta.value = State.notes[s.id+'-rewrite']||'';
-  ta.addEventListener('input',()=>{ State.notes[s.id+'-rewrite']=ta.value; save(); });
-  f.appendChild(ta); c.appendChild(f);
+  const wb = el('div','panel'); wb.setAttribute('data-rv','');
+  wb.innerHTML = `<p class="kicker">At the whiteboard</p>
+    <p style="margin:0">Rebuild the statement out loud, as a room. Name the behaviour, how often,
+    over what period, and what changed as a result. Write it up before we compare.</p>`;
+  c.appendChild(wb);
 
   const rv = el('button','go gold','Reveal the stronger version'); rv.setAttribute('data-rv','');
   c.appendChild(rv);
   const out = el('div',''); out.id='bOut'; out.setAttribute('data-rv',''); c.appendChild(out);
-  rv.addEventListener('click',()=>{
-    $('#bOut',c).innerHTML = `<div class="fb good"><p class="fb-h">Observable evidence</p>
-      <p style="font-size:19px;color:var(--ink);margin:0 0 12px">&ldquo;${s.better}&rdquo;</p>
-      <p style="margin:0">Same person, same claim. One of those you can defend in a calibration
-      conversation and one you cannot. <b>All seven checklist items are missing from the original</b>
-      &mdash; which is the point.</p></div>
-      <div class="grid g2" style="margin-top:18px">${s.sortItems.map(x=>
-        `<div class="card"><p class="kicker">${x.a}</p><p style="margin:0">${x.t}</p></div>`).join('')}</div>`;
-    rv.remove();
-  });
+
+  function paintReveal(){
+    const shown = !!UI.get(s.id+'::rev');
+    rv.style.display = shown ? 'none' : '';
+    const o = $('#bOut',c);
+    if(!o) return;
+    o.innerHTML = shown
+      ? `<div class="fb good"><p class="fb-h">Observable evidence</p>
+        <p style="font-size:19px;color:var(--ink);margin:0 0 12px">&ldquo;${s.better}&rdquo;</p>
+        <p style="margin:0">Same person, same claim. One of those you can defend in a calibration
+        conversation and one you cannot. <b>All seven questions are unanswered by the original</b>
+        &mdash; which is the point.</p></div>
+        <div class="grid g2" style="margin-top:18px">${s.sortItems.map(x=>
+          `<div class="card"><p class="kicker">${x.a}</p><p style="margin:0">${x.t}</p></div>`).join('')}</div>`
+      : '';
+  }
+  rv.addEventListener('click',()=> UI.set(s.id+'::rev', true));
+  paintReveal();
+  s._applyUI = ()=>{ paintChk(); paintReveal(); };
   if(s.note){ const n=el('div','note',s.note); n.setAttribute('data-rv',''); c.appendChild(n); }
   if(s.discuss) c.appendChild(discussBlock(s.discuss));
   c.appendChild(el('p','src','Source: '+s.src));
@@ -1120,12 +1390,86 @@ RENDER.bias = (s,c)=>{
 };
 
 /* --- Jordan intro */
+/* ---- Jordan: the shared evidence view
+   Used by both the intro scene and the pair-activity scene, because the pairs
+   need exactly the same evidence in front of them while they rate. Built as one
+   function so the two screens can never drift apart. */
+function jordanEvidence(s, c, opts){
+  opts = opts||{};
+  const P = s.profile;
+
+  if(P && opts.facts!==false){
+    const d = el('div','dossier'); d.setAttribute('data-rv','');
+    d.innerHTML = P.facts.map(([k,v])=>
+      `<div class="dcell"><p class="kicker">${k}</p><p class="dv">${v}</p></div>`).join('');
+    c.appendChild(d);
+  }
+
+  if(P && opts.history!==false){
+    const g = el('div','grid g2'); g.setAttribute('data-rv','');
+    g.innerHTML =
+      `<div class="card"><p class="kicker">How she got here</p>
+        <ul style="margin:0;padding-left:19px">${
+          P.priorRoles.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+       <div class="card"><p class="kicker">What she is responsible for</p>
+        <ul style="margin:0;padding-left:19px">${
+          P.responsibilities.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+    c.appendChild(g);
+
+    const perf = el('div','card tint'); perf.setAttribute('data-rv','');
+    perf.innerHTML = `<p class="kicker">Performance history</p>
+      <ul style="margin:0;padding-left:19px">${
+        P.performance.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+    c.appendChild(perf);
+  }
+
+  if(P && opts.timeline!==false){
+    const tw = el('div',''); tw.setAttribute('data-rv','');
+    tw.innerHTML = `<h3 style="margin:6px 0 12px">Timeline</h3>
+      <ul class="tl">${P.timeline.map(x=>
+        `<li><span class="tly">${x.y}</span><p class="tlt">${x.t}</p></li>`).join('')}</ul>`;
+    c.appendChild(tw);
+  }
+
+  /* The four competencies. The approved anchor sentence leads each one, with the
+     supporting evidence and the gap beneath it — so the room can see exactly how
+     much weight the anchor is actually carrying. */
+  s.rows.forEach((r,ri)=>{
+    const box = el('div','card'); box.setAttribute('data-rv','');
+    box.innerHTML = `<p class="kicker">Competency ${ri+1} of 4</p>
+      <h3 style="margin:2px 0 10px">${r.comp}</h3>
+      <div class="evrow"><p><strong>${r.anchor||r.ev}</strong></p>
+        <p class="evsrc">Recorded observation</p></div>
+      ${(r.hard||[]).map(x=>`<div class="evrow hard"><p>${x}</p></div>`).join('')}
+      ${(r.soft||[]).map(x=>`<div class="evrow soft"><p>${x}</p></div>`).join('')}
+      ${r.gap?`<div class="evrow gapbox"><p><strong>Evidence gap:</strong> ${r.gap}</p></div>`:''}`;
+    c.appendChild(box);
+  });
+
+  if(P && opts.stakeholders!==false){
+    const sh = el('div',''); sh.setAttribute('data-rv','');
+    sh.innerHTML = `<h3 style="margin:6px 0 12px">What stakeholders have said</h3>`+
+      P.stakeholders.map(x=>
+        `<div class="evrow ${x.tone}"><p>${x.q}</p>
+         <p class="evsrc">${x.who}</p></div>`).join('');
+    c.appendChild(sh);
+  }
+
+  if(P && opts.gaps!==false){
+    const gp = el('div','panel'); gp.setAttribute('data-rv','');
+    gp.style.borderColor = 'rgba(240,192,112,.4)';
+    gp.style.background = 'rgba(240,192,112,.06)';
+    gp.innerHTML = `<p class="kicker" style="color:#F6DCAC">Where the evidence runs out</p>
+      <ul style="margin:0;padding-left:19px">${
+        P.gaps.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+    c.appendChild(gp);
+  }
+}
+
 RENDER.jordanintro = (s,c)=>{
   head(s,c);
-  const t = el('div','ws'); t.setAttribute('data-rv','');
-  t.innerHTML = s.rows.map(r=>`<div class="ws-row"><p class="ws-comp">${r.comp}</p>
-    <p class="ws-ev" style="margin:0">${r.ev}</p></div>`).join('');
-  c.appendChild(t);
+  jordanEvidence(s,c);
+
   const st = el('div','grid g3'); st.setAttribute('data-rv','');
   st.innerHTML = s.structure.map(x=>`<div class="card tint"><p class="kicker">${x[0]}</p>
     <p class="big-num" style="font-size:30px">${x[1]}</p><p class="small"
@@ -1136,93 +1480,76 @@ RENDER.jordanintro = (s,c)=>{
   c.appendChild(el('p','src','Source: '+s.src));
 };
 
-/* --- Jordan worksheet */
+/* --- Jordan pair activity
+   The rating form has been removed from this screen. Pairs rate on one phone;
+   the room screen holds the evidence they are reasoning about, readable from the
+   back, for the full fifteen minutes. The facilitator's own capture controls
+   remain, hidden from the projected display by `.fac-only`, for the case where
+   the phones are unavailable. */
 RENDER.worksheet = (s,c)=>{
   head(s,c);
-  const ws = el('div','ws'); ws.setAttribute('data-rv','');
+
+  if(s.pairNote){
+    const pn = el('div','panel'); pn.setAttribute('data-rv','');
+    pn.style.borderColor = 'rgba(240,192,112,.45)';
+    pn.style.background = 'rgba(240,192,112,.08)';
+    pn.innerHTML = `<p class="kicker" style="color:#F6DCAC">How to work</p>
+      <p style="margin:0;font-size:20px;line-height:1.5">${s.pairNote}</p>`;
+    c.appendChild(pn);
+  }
+
+  jordanEvidence(s,c,{history:false});
+
+  const ref = el('div','card tint'); ref.setAttribute('data-rv','');
+  ref.innerHTML = `<p class="kicker">The 1&ndash;4 scale &mdash; reference</p>
+    <div class="assy">${SCALE.map(l=>`<div class="pill">
+      <div class="pn">LEVEL ${l.n}</div><div class="pt">${l.label}</div>
+      <div class="pd">${l.deck}</div></div>`).join('')}</div>`;
+  c.appendChild(ref);
+
+  /* No-technology fallback only. Never rendered on the projected display. */
+  const cap = el('div','fac-only'); cap.setAttribute('data-rv','');
+  cap.innerHTML = '<h3>Facilitator capture &mdash; only if phones are unavailable</h3>';
   s.rows.forEach((r,ri)=>{
-    const row = el('div','ws-row');
-    row.innerHTML = `<p class="ws-comp">${r.comp}</p><p class="ws-ev">${r.ev}</p>`;
-    const sc = el('div','scale');
-    SCALE.forEach(l=>{
-      const b = el('button','');
-      b.innerHTML = `${l.n}<span>${l.label}</span>`;
-      b.addEventListener('click',()=>{
-        Vote.add(s.id,'c'+ri, l.n-1); bump(b);
-        $('#wsc'+ri, row).textContent = Vote.total(s.id,'c'+ri)+' captured';
-      });
-      sc.appendChild(b);
-    });
-    row.appendChild(sc);
-    const t = el('p','small'); t.id='wsc'+ri;
-    t.textContent = Vote.total(s.id,'c'+ri)+' captured';
-    row.appendChild(t);
-    row.appendChild(roomCapture(s.id,'c'+ri, SCALE.map(l=>l.n+' — '+l.label),
-      ()=>{ t.textContent = Vote.total(s.id,'c'+ri)+' captured'; }));
-    ws.appendChild(row);
+    const row = el('div','');
+    row.innerHTML = `<p class="kicker" style="margin:14px 0 6px">${r.comp}</p>`;
+    row.appendChild(roomCapture(s.id,'c'+ri, SCALE.map(l=>l.n+' — '+l.label)));
+    cap.appendChild(row);
   });
-  c.appendChild(ws);
-
-  const cls = el('div',''); cls.setAttribute('data-rv','');
-  cls.innerHTML = '<h3>Proposed classification</h3>';
-  const co = el('div','opts');
-  s.classes.forEach((k,i)=>{
-    const b = el('button','opt');
-    b.innerHTML = `<span class="mk">${i+1}</span><span>${k}</span>
-      <span class="tail" data-c="${i}">0</span>`;
-    b.addEventListener('click',()=>{ Vote.add(s.id,'cls',i); bump(b); pc(); });
-    co.appendChild(b);
-  });
-  cls.appendChild(co);
-  cls.appendChild(roomCapture(s.id,'cls',s.classes,pc));
-  c.appendChild(cls);
-
-  const tw = el('div',''); tw.setAttribute('data-rv','');
-  tw.innerHTML = '<h3>Could the gaps realistically be addressed within 12 months?</h3>';
-  const to = el('div','opts');
-  ['Yes','No','Not enough information'].forEach((k,i)=>{
-    const b = el('button','opt');
-    b.innerHTML = `<span class="mk">${i+1}</span><span>${k}</span>
-      <span class="tail" data-t="${i}">0</span>`;
-    b.addEventListener('click',()=>{ Vote.add(s.id,'12mo',i); bump(b); pc(); });
-    to.appendChild(b);
-  });
-  tw.appendChild(to);
-  tw.appendChild(roomCapture(s.id,'12mo',['Yes','No','Not enough information'],pc));
-  c.appendChild(tw);
-
-  ['Evidence supporting your ratings','Additional evidence you would need before finalising',
-   'The first development action you would recommend'].forEach((lab,i)=>{
-    const f = el('div','field'); f.setAttribute('data-rv','');
-    f.innerHTML = `<label>${lab}</label><p class="hint">Private to this device. Never displayed,
-      never exported. Do not include any real employee&rsquo;s name.</p>`;
-    const ta = el('textarea');
-    ta.value = State.notes[s.id+'-t'+i]||'';
-    ta.addEventListener('input',()=>{ State.notes[s.id+'-t'+i]=ta.value; save(); });
-    f.appendChild(ta); c.appendChild(f);
-  });
+  const clsCap = el('div','');
+  clsCap.innerHTML = '<p class="kicker" style="margin:14px 0 6px">Proposed classification</p>';
+  clsCap.appendChild(roomCapture(s.id,'cls',s.classes));
+  cap.appendChild(clsCap);
+  const twCap = el('div','');
+  twCap.innerHTML = '<p class="kicker" style="margin:14px 0 6px">Ready within ~12 months</p>';
+  twCap.appendChild(roomCapture(s.id,'12mo',['Yes','No','Not enough information']));
+  cap.appendChild(twCap);
+  c.appendChild(cap);
 
   c.appendChild(el('p','src','Source: '+s.src));
-  function pc(){
-    s.classes.forEach((_,i)=>{ const t=$(`[data-c="${i}"]`,co);
-      if(t) t.textContent = Vote.bag(s.id,'cls')[i]||0; });
-    ['Yes','No','Not enough information'].forEach((_,i)=>{ const t=$(`[data-t="${i}"]`,to);
-      if(t) t.textContent = Vote.bag(s.id,'12mo')[i]||0; });
-  }
-  pc();
 };
 
-/* --- Jordan results */
+/* --- Jordan results
+   Two changes from the previous version. First, the written responses are now
+   displayed — anonymously, and only when the facilitator chooses to show them.
+   Participants are told this on their phone before they type, and it turns the
+   debrief from a summary of numbers into the room reading each other's
+   reasoning. Second, the "there is no answer key" panel is gone: it was reading
+   as permission to stop reasoning. What remains is the honest version — the
+   evidence does not settle it, and naming that is the finding. */
 RENDER.jordanresults = (s,c)=>{
   head(s,c);
   const src = 'jordan-worksheet';
+
   const g = el('div','grid g4'); g.setAttribute('data-rv','');
   s.rows.forEach((r,ri)=>{
     const counts = Vote.counts(src,'c'+ri,4);
     const avg = Vote.avg(src,'c'+ri,[1,2,3,4]);
+    const med = median(counts,[1,2,3,4]);
     const card = el('div','card');
     card.innerHTML = `<p class="kicker">${r.comp}</p>`+
-      hist(SCALE.map(l=>l.label), counts, avg||0);
+      hist(SCALE.map(l=>l.label), counts, avg||0)+
+      (med!==null?`<p class="small" style="margin:6px 0 0">Median ${med}</p>`:'');
     g.appendChild(card);
   });
   c.appendChild(g);
@@ -1231,20 +1558,83 @@ RENDER.jordanresults = (s,c)=>{
   two.innerHTML =
     '<div><h3 style="margin-top:0">Proposed classification</h3>'+
       barChart(s.classes, Vote.counts(src,'cls',s.classes.length))+'</div>'+
-    '<div><h3 style="margin-top:0">Could the gaps close within 12 months?</h3>'+
+    '<div><h3 style="margin-top:0">Ready within approximately 12 months?</h3>'+
       barChart(['Yes','No','Not enough information'], Vote.counts(src,'12mo',3))+'</div>';
   c.appendChild(two);
 
+  /* Anonymous written responses, each behind its own facilitator reveal. */
+  [['ev','Evidence the room pointed to'],
+   ['need','Evidence the room said was still missing'],
+   ['case','The business cases, in the room&rsquo;s own words'],
+   ['dev','First development or utilization actions recommended']].forEach(([k,lab])=>{
+    c.appendChild(textReveal(s, src, k, lab));
+  });
+
+  if(s.challenge){
+    const ch = el('div','panel'); ch.setAttribute('data-rv','');
+    ch.style.borderColor = 'rgba(240,192,112,.45)';
+    ch.style.background = 'rgba(240,192,112,.08)';
+    ch.innerHTML = `<p class="kicker" style="color:#F6DCAC">Calibration challenge</p>
+      <p style="margin:0;font-size:20px;line-height:1.5">${s.challenge}</p>`;
+    c.appendChild(ch);
+  }
+
   const w = el('div','panel protect'); w.setAttribute('data-rv','');
-  w.innerHTML = `<p class="kicker">There is no answer key</p>
-    <p style="margin:0">There is no single forced correct classification for Jordan. That is
-    deliberate. Disagreement and missing evidence are the expected outcomes of this activity, not
-    errors. Written answers stay on each participant&rsquo;s own device and are never displayed.</p>`;
+  w.innerHTML = `<p class="kicker">What the evidence supports</p>
+    <p style="margin:0">More than one classification is defensible here, and none of them is
+    fully supported. In a real calibration room the outcome would be a request for more evidence
+    &mdash; particularly on Development of Others &mdash; before finalising. Naming that is a
+    stronger answer than forcing a call.</p>`;
   c.appendChild(w);
 
   if(s.discuss) c.appendChild(discussBlock(s.discuss));
   c.appendChild(el('p','src','Source: '+s.src));
 };
+
+/** Median level from a count distribution. Useful where the mean hides a split. */
+function median(counts, values){
+  const total = counts.reduce((a,b)=>a+b,0);
+  if(!total) return null;
+  const mid = total/2;
+  let seen = 0;
+  for(let i=0;i<counts.length;i++){
+    seen += counts[i];
+    if(seen >= mid) return values[i];
+  }
+  return null;
+}
+
+/* Anonymous free-text, revealed on the facilitator's call and mirrored to the
+   projected screen. The texts come from LIVE.texts, which the server builds
+   without participant ids — there is no path from a displayed quote back to a
+   person, which is what makes showing them acceptable at all. */
+function textReveal(s, srcStep, key, label){
+  const wrap = el('div',''); wrap.setAttribute('data-rv','');
+  const uk = s.id+'::tx-'+key;
+  const btn = el('button','go sub','Show: '+stripTags(label).toLowerCase());
+  const out = el('div','');
+  wrap.appendChild(el('h3','', label));
+  wrap.appendChild(btn);
+  wrap.appendChild(out);
+
+  function paint(){
+    const shown = !!UI.get(uk);
+    btn.style.display = shown ? 'none' : '';
+    const texts = (window.LIVE && LIVE.texts && LIVE.texts[srcStep+'::'+key]) || [];
+    if(!shown){ out.innerHTML = ''; return; }
+    out.innerHTML = texts.length
+      ? `<div class="texts">${texts.map(t=>`<p class="tq">${esc(t)}</p>`).join('')}</div>
+         <p class="textsmeta">${texts.length} anonymous response${texts.length===1?'':'s'}
+         &middot; no names are collected or shown</p>`
+      : `<div class="chart-empty">No written responses captured yet.</div>`;
+  }
+  btn.addEventListener('click',()=> UI.set(uk, true));
+  paint();
+  // chain onto any applier the scene already registered
+  const prev = s._applyUI;
+  s._applyUI = ()=>{ if(prev) prev(); paint(); };
+  return wrap;
+}
 
 /* --- break */
 RENDER.break = (s,c)=>{
@@ -1259,23 +1649,88 @@ RENDER.break = (s,c)=>{
     <p class="src">Source: ${s.src}</p>`;
 };
 
-/* --- final reflection — protected, nothing collected */
+/* --- the empty chair: a facilitator-led visualisation
+   One line per reveal on purpose. The facilitator is speaking this in a dimmed
+   room and needs to control the pace sentence by sentence; a panel of six
+   paragraphs would put the ending on the wall before they had said the middle.
+   The environment cue is `.fac-only`, so the instruction to dim the lights never
+   appears on the wall the room is looking at. */
+RENDER.viz = (s,c)=>{
+  const wrap = el('div','viz');
+
+  const hd = el('div',''); hd.setAttribute('data-rv','');
+  hd.innerHTML = `<p class="eyebrow">${s.eyebrow}</p><h1>${s.title}</h1>`;
+  wrap.appendChild(hd);
+
+  if(s.environment){
+    const cue = el('div','dimcue fac-only'); cue.setAttribute('data-rv','');
+    cue.innerHTML = `<p><b>Before you begin:</b> ${s.environment.join(' ')}</p>`;
+    wrap.appendChild(cue);
+  }
+
+  (s.lines||[]).forEach(l=>{
+    const p = el('p','vline', l); p.setAttribute('data-rv',''); wrap.appendChild(p);
+  });
+
+  if(s.mail){
+    const m = el('div','vmail'); m.setAttribute('data-rv','');
+    m.innerHTML = `<p>&ldquo;${s.mail}&rdquo;</p>`;
+    wrap.appendChild(m);
+  }
+
+  (s.after||[]).forEach(l=>{
+    const p = el('p','vline', l); p.setAttribute('data-rv',''); wrap.appendChild(p);
+  });
+
+  if(s.closeQ){
+    const q = el('p','vq', s.closeQ); q.setAttribute('data-rv',''); wrap.appendChild(q);
+  }
+  if(s.askAfter){
+    const a = el('p','vq', '&ldquo;'+s.askAfter+'&rdquo;'); a.setAttribute('data-rv','');
+    a.style.color = 'var(--cream)';
+    wrap.appendChild(a);
+  }
+  if(s.teaching){
+    const t = el('div','panel'); t.setAttribute('data-rv','');
+    t.innerHTML = `<p class="kicker">What this is really about</p>
+      <ul style="margin:0;padding-left:19px">${s.teaching.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+    wrap.appendChild(t);
+  }
+  if(s.landing){
+    const l = el('div','panel protect'); l.setAttribute('data-rv','');
+    l.innerHTML = `<p style="margin:0;font:700 clamp(21px,2.2vw,32px)/1.35 var(--serif);
+      color:var(--cream)">${s.landing}</p>`;
+    wrap.appendChild(l);
+  }
+  const sr = el('p','src','Source: '+s.src); sr.setAttribute('data-rv','');
+  wrap.appendChild(sr);
+  c.appendChild(wrap);
+};
+
+/* --- final reflection
+   Still protected, still unhurried, but no longer device-private: responses are
+   collected anonymously and displayed only when the facilitator chooses to. The
+   room hearing each other's commitments is a better close than each person
+   holding their own. Participants are told this on the phone before they type. */
 RENDER.reflect = (s,c)=>{
   const wrap = el('div','reflect-wrap');
   wrap.innerHTML = `<p class="eyebrow" data-rv style="justify-content:center">${s.eyebrow}</p>
     <p class="reflect-q" data-rv>&ldquo;${s.question}&rdquo;</p>`;
-  const f = el('div','field'); f.setAttribute('data-rv','');
-  f.innerHTML = `<p class="hint" style="text-align:center">Optional, and private to this device.
-    Nothing here is collected, displayed or exported.</p>`;
-  const ta = el('textarea'); ta.placeholder = 'If you want to write it down…';
-  ta.value = State.notes['reflection']||'';
-  ta.addEventListener('input',()=>{ State.notes['reflection']=ta.value; save(); });
-  f.appendChild(ta); wrap.appendChild(f);
-  const th = el('p','lede', s.sub); th.setAttribute('data-rv','');
-  th.style.textAlign='center'; th.style.margin='26px auto 0'; wrap.appendChild(th);
-  const sr = el('p','src','Source: '+s.src);
-  sr.style.textAlign='center'; wrap.appendChild(sr);
+
+  const hint = el('p','lede'); hint.setAttribute('data-rv','');
+  hint.style.textAlign='center'; hint.style.margin='0 auto 8px';
+  hint.innerHTML = 'Answer privately on your phone. Responses are anonymous &mdash; no name is '
+    + 'attached to anything, and nothing appears on this screen unless we choose to show it.';
+  wrap.appendChild(hint);
   c.appendChild(wrap);
+
+  const reveal = textReveal(s, s.id, 'reflection', 'What this room said');
+  c.appendChild(reveal);
+
+  const th = el('p','lede', s.sub); th.setAttribute('data-rv','');
+  th.style.textAlign='center'; th.style.margin='26px auto 0'; c.appendChild(th);
+  const sr = el('p','src','Source: '+s.src);
+  sr.style.textAlign='center'; sr.setAttribute('data-rv',''); c.appendChild(sr);
   Array.from(wrap.children).forEach(n=>{ if(!n.hasAttribute('data-rv')) n.setAttribute('data-rv',''); });
 };
 
@@ -1384,3 +1839,14 @@ window.Vote = Vote;
 window.gotoStep = goto;
 window.flashMsg = flash;
 window.cameraRefresh = camera;
+window.UI = UI;
+window.applyUI = applyUI;
+window.toggleMapView = toggleMap;
+window.rerenderScene = function(){
+  const s = step();
+  if(!s) return;
+  s._built = false;
+  render(s);
+  s._built = true;
+  paintReveals();
+};

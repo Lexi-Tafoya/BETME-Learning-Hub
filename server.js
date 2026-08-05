@@ -54,8 +54,11 @@ function fresh() {
     id: rnd(6),
     code: makeCode(),
     live: false,                 // has the facilitator started the session
+    staged: false,               // has a presenter ever pushed a scene position
     stepIndex: 0,
     rv: 1,
+    ui: {},                      // audience-facing interaction state (see UI in app.js)
+    modal: null,                 // {kind, ...} for a projected popup, or null
     activity: null,              // stepId of the OPEN activity, or null
     accepting: false,            // are submissions being accepted
     resultsVisible: false,
@@ -63,6 +66,7 @@ function fresh() {
     timerRunning: false,
     timerBase: 0,                // ms accumulated
     timerAt: 0,                  // epoch when started
+    startedAt: Date.now(),
     participants: new Map(),     // pid -> lastSeen   (no personal data)
     responses: new Map(),        // stepId -> Map(pid -> {[key]: value})
     tally: new Map()             // stepId::key -> {optionIndex: count}  (backup mode)
@@ -77,14 +81,16 @@ const clients = new Set();
 
    The first visit claims the console and gets a key back in an httpOnly cookie,
    so a refresh stays in control. Everyone who arrives afterwards gets a
-   read-only view and is told who has it — which is what keeps a public URL
-   safe without asking the facilitator to manage a secret: there is only ever
-   one live console, and the only way to move it is the current facilitator
-   pressing Transfer control.
+   read-only view — which is what keeps a public URL safe without asking the
+   facilitator to manage a secret: there is only ever one live console.
 
-   Transfer rotates the key. That is the point: it revokes the previous
-   console's cookie in the same breath as it frees the claim, so a transfer can
-   never leave two devices both able to drive the room.
+   There is deliberately NO way to move control from inside the presentation.
+   Mid-workshop transfer was removed: it added a failure mode (two consoles
+   both believing they drive the room) in exchange for a capability the
+   facilitators never wanted during a live three-hour session. The claim is
+   released only by an explicit administrative reset from the landing page, or
+   by restarting the process. Nothing releases it on a timer, and nothing
+   releases it because the room went quiet.
    ------------------------------------------------------------------------- */
 const FAC_COOKIE = 'tmrfac';
 let facKey = process.env.FAC_KEY || rnd(8);
@@ -172,8 +178,11 @@ function state() {
     sessionId: S.id,
     code: S.code,
     live: S.live,
+    staged: S.staged,
     stepIndex: S.stepIndex,
     rv: S.rv,
+    ui: S.ui,
+    modal: S.modal,
     activity: S.activity,
     accepting: S.accepting,
     resultsVisible: S.resultsVisible,
@@ -270,8 +279,19 @@ const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   const p = u.pathname.replace(/\/+$/, '') || '/';
 
-  /* ---- SSE stream */
+  /* ---- SSE stream
+     Three things here exist purely to survive a three-hour workshop on a
+     hosted plan:
+       - the socket timeout is disabled, so nothing severs a quiet stream;
+       - a comment heartbeat every 12s keeps proxies (Render's included) from
+         reaping an idle connection, which is the usual cause of a "random
+         disconnection";
+       - the full state is written immediately on connect, so a reconnecting
+         client rehydrates from the server instead of falling back to whatever
+         it had in memory. */
   if (p === '/api/events') {
+    if (req.socket && req.socket.setTimeout) req.socket.setTimeout(0);
+    if (req.socket && req.socket.setKeepAlive) req.socket.setKeepAlive(true, 30000);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
@@ -287,9 +307,12 @@ const server = http.createServer(async (req, res) => {
     res.write('data: ' + JSON.stringify(state()) + '\n\n');
     const hb = setInterval(() => {
       try { res.write(': hb\n\n'); if (pid) S.participants.set(pid, Date.now()); }
-      catch (_) { clearInterval(hb); }
-    }, 15000);
-    req.on('close', () => { clearInterval(hb); clients.delete(c); broadcast(); });
+      catch (_) { clearInterval(hb); clients.delete(c); }
+    }, 12000);
+    const bye = () => { clearInterval(hb); clients.delete(c); broadcast(); };
+    req.on('close', bye);
+    req.on('error', bye);
+    res.on('error', bye);
     broadcast();
     return;
   }
@@ -322,8 +345,24 @@ const server = http.createServer(async (req, res) => {
     if (!authed(req, b.key)) return send(res, 401, { error: 'facilitator key required' });
     switch (b.action) {
       case 'start':    S.live = true; break;
+      // Every audience-facing position change arrives here: scene, reveal index,
+      // and the interaction state the projected screen has to mirror. `staged`
+      // latches so a presenter REFRESH can tell it is rejoining a running
+      // workshop and must rehydrate, rather than pushing scene 0 over the top
+      // of it — which is exactly how a console refresh used to send the room
+      // back to the beginning.
       case 'stage':    S.stepIndex = Math.max(0, b.stepIndex | 0); S.rv = Math.max(1, b.rv | 0);
+                       if (b.ui && typeof b.ui === 'object') S.ui = b.ui;
+                       if (b.modal !== undefined) S.modal = b.modal || null;
+                       S.staged = true;
                        break;
+      // Interaction state on its own: a teaching-point reveal, an expanded
+      // definition, a discussion prompt, a selected competency. Same scene,
+      // same reveal index, different thing on screen.
+      case 'ui':       if (b.ui && typeof b.ui === 'object') S.ui = b.ui;
+                       S.staged = true;
+                       break;
+      case 'modal':    S.modal = b.modal || null; break;
       case 'open':     S.activity = b.stepId || null;
                        S.accepting = !!b.stepId;      // null stepId = no activity open
                        S.resultsVisible = false; S.revealed = false; break;
@@ -342,13 +381,37 @@ const server = http.createServer(async (req, res) => {
                        break;
       case 'reset':    { const code = S.code; S = fresh(); S.code = code; S.live = true; break; }
       case 'newcode':  S.code = makeCode(); break;
-      // Hand the console to the next device that opens /presenter. Rotating the
-      // key is what makes this a hand-off rather than a second facilitator.
-      case 'transfer': facKey = rnd(8); facClaimed = false; break;
       default: return send(res, 400, { error: 'unknown action' });
     }
     broadcast();
     return send(res, 200, state());
+  }
+
+  /* ---- administrative release of the facilitator claim
+     Deliberately NOT reachable from the presentation. It lives on the landing
+     page, behind a confirmation, for the one case that matters: the console
+     laptop is gone (closed, dead battery, wrong browser profile) and the
+     workshop has to be driven from a different machine. It frees the claim and
+     rotates the key so the old console cannot also still drive the room. The
+     session itself — scene, reveals, every response — is untouched. */
+  if (p === '/api/admin/release' && req.method === 'POST') {
+    facKey = rnd(8);
+    facClaimed = false;
+    return send(res, 200, { ok: true, released: true });
+  }
+
+  /* ---- health: what Render polls, and what a facilitator can eyeball */
+  if (p === '/healthz' || p === '/api/health') {
+    return send(res, 200, {
+      ok: true,
+      uptimeSeconds: Math.round(process.uptime()),
+      sessionCode: S.code,
+      live: S.live,
+      staged: S.staged,
+      stepIndex: S.stepIndex,
+      participants: S.participants.size,
+      clients: clients.size
+    });
   }
 
   if (p === '/api/export') {
@@ -420,17 +483,48 @@ const server = http.createServer(async (req, res) => {
   <p class="small" style="margin:0">The room screen. Clean presentation, no controls, no notes.</p></a>
 <a class="card" href="/join"><h3 style="margin:0 0 4px">Participant join &rarr;</h3>
   <p class="small" style="margin:0">What the QR code opens. Phones only need this one link all session.</p></a>
+<div class="card" style="margin-top:22px;border-color:rgba(232,143,143,.34)">
+  <p class="kicker">Administrative reset</p>
+  <p class="small" style="margin:0 0 12px">The facilitator console stays claimed by the first
+  device that opened it, and survives refreshes &mdash; nothing releases it on a timer. Use this
+  only if that laptop is genuinely unavailable and the workshop must be driven from another
+  machine. The session, the phones and every response captured so far are unaffected.</p>
+  <button class="go sub" id="rel" type="button">Release the facilitator console</button>
+  <p class="small" id="relMsg" style="margin:10px 0 0"></p></div>
 <div class="card" style="margin-top:22px"><p class="kicker">Join QR</p>
   <img src="/qr?px=6" alt="Join QR code" style="width:210px;background:#fff;padding:8px;border-radius:10px">
   <p class="small" style="margin:12px 0 0;word-break:break-all">${b}/join</p></div>
 <p class="src">Foundational learning &mdash; not an implementation of a Business Enablement TMR
-process.</p></div></body></html>`, 'text/html; charset=utf-8');
+process.</p></div>
+<script>
+document.getElementById('rel').addEventListener('click', function () {
+  if (!confirm('Release the facilitator console?\\n\\nThe next device that opens /presenter takes '
+    + 'control. Do this only if the current console laptop is unavailable.')) return;
+  var m = document.getElementById('relMsg');
+  m.textContent = 'Releasing…';
+  fetch('/api/admin/release', { method: 'POST' })
+    .then(function (r) { return r.json(); })
+    .then(function () { m.textContent = 'Released. Open the facilitator console on the device '
+      + 'that will drive the room. The session and all responses are unchanged.'; })
+    .catch(function () { m.textContent = 'Could not reach the server.'; });
+});
+</script>
+</body></html>`, 'text/html; charset=utf-8');
   }
 
   return serveFile(res, u.pathname);
 });
 
-/* ------------------------------------------------------------------ boot */
+/* ------------------------------------------------------------------ boot
+   Node's own request/header timeouts are the last thing that can cut a
+   long-lived event stream out from under a running workshop. Disabled
+   deliberately: the only thing that should ever end this session is the
+   facilitator. */
+server.timeout = 0;
+server.requestTimeout = 0;
+server.headersTimeout = 0;
+server.keepAliveTimeout = 76_000;
+
 server.listen(PORT, () => {
   const list = ips();
   const lan = list[0];
@@ -442,8 +536,10 @@ server.listen(PORT, () => {
   console.log('  FACILITATOR   (your laptop, keep private)');
   console.log('     http://localhost:' + PORT + '/presenter');
   console.log('       Just open it. The first device to do so is the presenter, and');
-  console.log('       stays the presenter through refreshes. Anyone opening it after');
-  console.log('       that gets a read-only view until you press Transfer control.\n');
+  console.log('       stays the presenter through refreshes, reconnections and long');
+  console.log('       discussions. Anyone opening it after that gets a read-only view.');
+  console.log('       Control is never handed over from inside the presentation — if');
+  console.log('       this laptop becomes unavailable, release it from the landing page.\n');
   console.log('  PROJECTED DISPLAY   (the room screen)');
   console.log('     http://localhost:' + PORT + '/display\n');
   console.log('  PARTICIPANTS   (this is what the QR code points to)');

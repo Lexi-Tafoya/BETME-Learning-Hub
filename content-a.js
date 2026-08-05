@@ -90,16 +90,150 @@ const SCALE = [
    remember:'Level 4 creates broader, repeatable, or strategic improvement. Not every role or competency requires Level 4.'}
 ];
 
-// Jordan — evidence is verbatim from slide 24 and Participant Guide pp. 3–4
+/* ============================================================================
+   JORDAN — the executive case study
+   ==========================================================================
+
+   Jordan is FICTIONAL. Every name, project, date and figure below is invented
+   for this workshop. Nothing here describes a real Master Electronics employee,
+   and nothing here contains protected personal information — no health,
+   family, demographic, compensation or disciplinary content. That constraint is
+   not decoration: the moment a practice case resembles a real person, the room
+   stops reasoning about evidence and starts reasoning about the person.
+
+   Pronouns: Jordan is she/her throughout, taken from the approved slide 24
+   evidence ("builds HER own status dashboards", "HER own projects"). Used
+   consistently in every scene, every script and on the phone.
+
+   The four anchor sentences from slide 24 and Participant Guide pp. 3–4 are
+   preserved VERBATIM as `anchor`. Everything else expands around them without
+   contradicting them.
+
+   Designed to be genuinely hard:
+     - the four competencies do not land on the same level;
+     - the strongest evidence and the weakest evidence sit side by side;
+     - the Development of Others evidence is deliberately parked on the 2/3
+       boundary, which is where calibration rooms actually argue;
+     - some statements are impressions in evidence clothing ("I feel…",
+       "people say…", "Jordan is always…") and are marked as such only in the
+       facilitator material, never on screen.
+   ========================================================================= */
+const JORDAN_PROFILE = {
+  name:'Jordan',
+  role:'Project Manager, Business Enablement',
+  facts:[
+    ['Current role','Project Manager, Business Enablement'],
+    ['Company tenure','Six years at Master Electronics'],
+    ['Time in current role','Two years and eight months'],
+    ['Reports to','Manager, Business Enablement Project Delivery'],
+    ['Scope','Runs three to five concurrent projects; no direct reports'],
+    ['Evaluation period','The full prior twelve months']
+  ],
+  priorRoles:[
+    'Customer Service Representative &mdash; 14 months. Joined Master Electronics here.',
+    'Project Coordinator, Business Enablement &mdash; 21 months. Scheduling, status reporting, meeting coordination.',
+    'Associate Project Manager &mdash; 17 months. First time owning delivery on small projects.',
+    'Project Manager &mdash; current, two years and eight months.'
+  ],
+  responsibilities:[
+    'End-to-end delivery of three to five concurrent Business Enablement projects.',
+    'Weekly status reporting to project sponsors and the delivery manager.',
+    'Requirements gathering with requesting departments.',
+    'Vendor coordination on two recurring system integrations.',
+    'Onboarding new Project Coordinators to the delivery process &mdash; assigned informally, not a formal responsibility.'
+  ],
+  timeline:[
+    {y:'Two years ago',
+     t:'Promoted to Project Manager. First independent portfolio of projects.'},
+    {y:'18 months ago',
+     t:'Took over the ERP data-migration workstream mid-flight after the previous PM left. Scope was re-baselined twice in the first quarter.'},
+    {y:'12 months ago',
+     t:'Delivered four projects against revised deadlines after scope changed, with no missed customer commitments. Built her own status dashboards during this period because the standard reporting pack did not show what sponsors were asking for.'},
+    {y:'9 months ago',
+     t:'Completed the internal Project Delivery Fundamentals programme. Asked for it; it was not assigned.'},
+    {y:'6 months ago',
+     t:'Began informally coaching two junior Project Managers. Nobody asked her to. Both have since started leading their own weekly status reviews independently.'},
+    {y:'4 months ago',
+     t:'Invited to a cross-functional Operations planning session as the Business Enablement delivery representative. Attended twice, contributed on delivery mechanics, did not raise the department-level implications of what was discussed.'},
+    {y:'Last quarter',
+     t:'A recurring data-quality issue surfaced on two of her projects. Jordan escalated it accurately each time and worked around it, but did not investigate why it kept recurring.'}
+  ],
+  performance:[
+    'Last two annual performance reviews: <strong>Exceeds Expectations</strong> on delivery, <strong>Meets Expectations</strong> overall.',
+    'Zero missed customer commitments across the evaluation period.',
+    'Highest sponsor-satisfaction scores in the delivery team for two consecutive review cycles.',
+    'No formal leadership responsibility has been held at any point.'
+  ],
+  stakeholders:[
+    {who:'Delivery manager (direct leader)', tone:'hard',
+     q:'&ldquo;Jordan re-baselined the ERP migration twice and still landed every revised date. I have never had to chase her for a status.&rdquo;'},
+    {who:'Finance sponsor', tone:'hard',
+     q:'&ldquo;Her dashboards are the only reporting I do not have to interpret before I can use it. I asked for a trend view of the recurring defects and did not get one.&rdquo;'},
+    {who:'Peer Project Manager', tone:'soft',
+     q:'&ldquo;I feel Jordan is a strong leader. People say she is the one the junior PMs go to.&rdquo;'},
+    {who:'Operations planning lead', tone:'soft',
+     q:'&ldquo;Jordan seems focused. She answered everything we asked about her projects. She did not tell us what any of it meant for the wider roadmap.&rdquo;'},
+    {who:'Junior Project Manager (coached)', tone:'hard',
+     q:'&ldquo;She sat with me through two status cycles until I could run the review myself. She has never once done it for me.&rdquo;'},
+    {who:'Requesting department manager', tone:'soft',
+     q:'&ldquo;Jordan is always reliable.&rdquo;'}
+  ],
+  gaps:[
+    'No formal people-leadership experience, and no evidence of how she performs when she is accountable for someone else’s results.',
+    'No evidence of root-cause analysis. She identifies and escalates data problems accurately but has not investigated why any of them recur.',
+    'The coaching of the two junior PMs has been observed by one leader only, over roughly six months. Nobody has asked the two coached PMs’ own leaders what they have seen.',
+    'No evidence of Jordan connecting her delivery work to department or company-level goals, in either direction.',
+    'Career interest and willingness to move into leadership have not been discussed with her.',
+    'Two of the stakeholder observations on record are impressions rather than evidence.'
+  ]
+};
+
+// The four rated competencies. `anchor` is verbatim from slide 24 and the
+// Participant Guide. `hard` is concrete supporting evidence; `soft` is what a
+// leader has said that is NOT yet evidence; `gap` is what is missing.
 const JORDAN = [
   {comp:'Accountable to Results',
-   ev:'Consistently hits project deadlines even when scope changes mid-stream.'},
+   ev:'Consistently hits project deadlines even when scope changes mid-stream.',
+   anchor:'Consistently hits project deadlines even when scope changes mid-stream.',
+   hard:[
+     'Delivered four projects against revised deadlines in the last twelve months after scope changed, with no missed customer commitments.',
+     'Took over the ERP data-migration workstream mid-flight and landed every revised date through two re-baselines.',
+     'Highest sponsor-satisfaction scores in the delivery team for two consecutive review cycles.'
+   ],
+   soft:['&ldquo;Jordan is always reliable.&rdquo; &mdash; requesting department manager'],
+   gap:'No evidence of her improving the delivery process itself, or of results held under someone else’s accountability.'},
+
   {comp:'Data Literacy',
-   ev:'Builds her own status dashboards but rarely digs into root-cause trends.'},
+   ev:'Builds her own status dashboards but rarely digs into root-cause trends.',
+   anchor:'Builds her own status dashboards but rarely digs into root-cause trends.',
+   hard:[
+     'Built her own status dashboards because the standard reporting pack did not answer what sponsors were asking.',
+     'Finance sponsor: the dashboards are the only reporting they do not have to interpret before using.',
+     'Escalated a recurring data-quality issue accurately on two projects last quarter.'
+   ],
+   soft:['&ldquo;She is good with data.&rdquo; &mdash; peer, in passing'],
+   gap:'Asked for a trend view of recurring defects and did not produce one. No instance of her investigating why a problem recurs, only that it did.'},
+
   {comp:'Development of Others',
-   ev:'Has begun coaching two junior Project Managers informally, without being asked.'},
+   ev:'Has begun coaching two junior Project Managers informally, without being asked.',
+   anchor:'Has begun coaching two junior Project Managers informally, without being asked.',
+   hard:[
+     'Began coaching two junior Project Managers roughly six months ago, unprompted.',
+     'Both coached PMs now lead their own weekly status reviews independently.',
+     'One coached PM: &ldquo;She sat with me through two status cycles until I could run the review myself. She has never once done it for me.&rdquo;'
+   ],
+   soft:['&ldquo;I feel Jordan is a strong leader. People say she is the one the junior PMs go to.&rdquo; &mdash; peer Project Manager'],
+   gap:'Six months, two people, observed by one leader. No formal leadership responsibility has ever been held, and the coached PMs’ own leaders have not been asked what they have seen.'},
+
   {comp:'Strategic Awareness',
-   ev:'Focuses on her own projects and has not yet consistently connected the work to broader department goals.'}
+   ev:'Focuses on her own projects and has not yet consistently connected the work to broader department goals.',
+   anchor:'Focuses on her own projects and has not yet consistently connected the work to broader department goals.',
+   hard:[
+     'Attended cross-functional Operations planning twice as the Business Enablement delivery representative.',
+     'Contributed accurately on delivery mechanics when asked.'
+   ],
+   soft:['&ldquo;Jordan seems focused.&rdquo; &mdash; Operations planning lead'],
+   gap:'Did not raise the department-level implications of what was discussed, in either session. No evidence of her connecting delivery work upward to department or company goals, and no evidence she has been asked to.'}
 ];
 
 const CLASSES = ['HiPo','Mid Potential','HiPro','Low Potential','Not enough information'];
@@ -124,9 +258,180 @@ const SIX_QUESTIONS = [
   'Who should participate in the next planning conversation?'
 ];
 
+/* ------------------------------------------------------------- instructions
+   One entry per interactive scene, answering the same eight questions:
+   why the room is doing it, on what device, what they submit, whether it is
+   anonymous, whether there is a right answer, how long they have, what happens
+   after they submit, and what they should be ready to discuss.
+
+   Held centrally rather than inline so that a scene cannot be added without
+   somebody noticing it has no instructions — and so the wording stays
+   consistent in register across all thirty-two scenes. Kept short: this renders
+   on a projected screen. The participant phone carries the longer version.
+
+   `answer` is deliberately explicit about scoring. In a room of executives,
+   ambiguity about whether something is being marked changes what people are
+   willing to put on a screen.                                                */
+const INSTRUCT = {
+  'poll-confidence': {
+    why:'Establishes a baseline we will return to at the end of the session.',
+    device:'Your phone. One tap.',
+    submit:'One confidence rating.',
+    anon:'Anonymous. Only the group distribution is shown — never an individual answer.',
+    answer:'No correct answer. This is a reading of the room, not an assessment.',
+    time:'About one minute.',
+    after:'The distribution appears on the main screen once the facilitator closes responses.',
+    ready:'Be ready to say what would have to change to move you up one level.'
+  },
+  'pr-tmr': {
+    why:'Separates performance review questions from talent review questions before we build on either.',
+    device:'Your phone. Sort each statement into one of the two columns.',
+    submit:'One placement for every statement.',
+    anon:'Anonymous. Group totals only.',
+    answer:'There is a correct answer for each, and it is revealed after responses close.',
+    time:'Three minutes.',
+    after:'We reveal the correct placements and work through any the room split on.',
+    ready:'Be ready to explain any statement you found genuinely ambiguous.'
+  },
+  'class-sort': {
+    why:'Tests whether the four classification definitions are usable on real evidence rather than just readable.',
+    device:'Your phone. One classification per case.',
+    submit:'A classification for each of the three cases.',
+    anon:'Anonymous. Group totals only.',
+    answer:'One of the three is deliberately incomplete. &ldquo;Not enough information&rdquo; is a legitimate answer, not a cop-out.',
+    time:'Four minutes.',
+    after:'We compare the room’s distribution against what the evidence actually supports.',
+    ready:'Be ready to name the specific evidence that drove your call.'
+  },
+  'comp-explorer': {
+    device:'Your phone is a private reference for this section. Nothing is submitted.',
+    submit:'Nothing to submit. There is no scoring and no right answer here.',
+    anon:'Private to your own device. Nothing you tap is broadcast to the room.',
+    time:'About five minutes, led from the front.',
+    after:'The four highlighted competencies are the ones you will apply to Jordan shortly.',
+    ready:'Be ready to say which competency you would find hardest to evidence in your own team.'
+  },
+  'scale-quiz': {
+    why:'Calibrates the two boundaries leaders most often get wrong: 1 to 2, and 3 to 4.',
+    device:'Your phone. One level per description.',
+    submit:'A rating of 1 to 4 for each of the four descriptions.',
+    anon:'Anonymous. Group totals only.',
+    answer:'Each description maps to one intended level, and we reveal it with the reasoning.',
+    time:'Four minutes.',
+    after:'Each answer is revealed with the reasoning behind it before we move on.',
+    ready:'Be ready to challenge a boundary you would have drawn differently.'
+  },
+  'evidence': {
+    why:'Gives you the seven questions that separate observable evidence from an impression.',
+    device:'Your phone holds the seven questions as a private reference for the rest of the session.',
+    submit:'Nothing. There is no response to send on this screen.',
+    anon:'Private to your device. Nothing is broadcast.',
+    answer:'No scoring. This is a reference tool.',
+    time:'About four minutes, led from the front.',
+    after:'We apply the seven questions to a set of statements as a room.',
+    ready:'Be ready to say which of the seven questions your own talent notes usually fail.'
+  },
+  'evidence-build': {
+    why:'Builds one defensible evidence statement together before you evaluate a full case alone.',
+    device:'Whiteboard, as a room. Your phone holds the seven questions for reference only.',
+    submit:'Nothing individually. The room produces one rewritten statement together.',
+    anon:'Nothing is collected from this activity.',
+    answer:'There is no single correct wording. There are wordings you could defend in calibration and wordings you could not.',
+    time:'Six minutes at the board.',
+    after:'We compare the room’s rewrite against a stronger version.',
+    ready:'Be ready to point at which of the seven questions your rewrite now answers.'
+  },
+  'bias': {
+    why:'Names the three rating tendencies that most distort talent decisions, and the structural safeguard for each.',
+    device:'Your phone. Identify the tendency in each situation.',
+    submit:'One identification for each of the three situations.',
+    anon:'Anonymous. Group totals only — nobody sees what you selected.',
+    answer:'Each situation maps to one tendency, revealed with its safeguard.',
+    time:'Four minutes.',
+    after:'We reveal each tendency and the structural safeguard that corrects it.',
+    ready:'Be ready to say which of the three you think is most common in calibration conversations.'
+  },
+  'leader-prep': {
+    why:'Turns six preparation steps into one honest self-assessment before your next talent conversation.',
+    device:'Your phone. One selection.',
+    submit:'The single preparation step you most need to strengthen.',
+    anon:'Anonymous. Only the group distribution appears.',
+    answer:'No correct answer. This is a self-assessment.',
+    time:'Two minutes.',
+    after:'The distribution appears on screen so the room can see where preparation is weakest.',
+    ready:'Be ready to name what would make that step easier to do consistently.'
+  },
+  'jordan-worksheet': {
+    why:'This is the central exercise of the workshop: apply the framework to a realistic case with incomplete evidence, the way calibration actually works.',
+    device:'Work in pairs. <strong>One phone per pair, one submission per pair.</strong>',
+    submit:'Four competency ratings, the evidence behind them, the evidence still missing, a proposed classification, the 12-month readiness call, your business case, and a first development action.',
+    anon:'Anonymous. No participant names are shown or stored. Written answers are displayed anonymously only when the facilitator chooses to show them.',
+    answer:'No forced correct classification. Your reasoning and your evidence are what is being examined.',
+    time:'Seven minutes in pairs, then eight minutes comparing at your table.',
+    after:'The room’s distributions appear on screen, then the facilitators present their own ratings — some of which are deliberately not well supported.',
+    ready:'Be ready to defend your rating with specific evidence, and to challenge a rating you disagree with.'
+  },
+  'calibration-challenge': {
+    why:'Puts you in the seat of a leader whose rating is being questioned in a calibration room.',
+    device:'Discuss as a room. No phone needed for this one.',
+    submit:'Nothing. This is a spoken discussion.',
+    anon:'Not applicable — nothing is captured.',
+    answer:'There is a defensible answer, and we work to it together.',
+    time:'Five minutes.',
+    after:'We land the reasoning and connect it back to the evidence standard.',
+    ready:'Be ready to say what additional evidence you would ask that leader for.'
+  },
+  'plans-match': {
+    why:'Checks that each classification produces the right leader action, which is where TMR either works or stops being useful.',
+    device:'Your phone. Match each classification to its required action.',
+    submit:'One action per classification.',
+    anon:'Anonymous. Group totals only.',
+    answer:'Each pairing has a correct answer drawn from the framework.',
+    time:'Four minutes.',
+    after:'We reveal the correct pairings and the accountability behind each.',
+    ready:'Be ready to say which plan you would find hardest to actually deliver.'
+  },
+  'future-rank': {
+    why:'Executive Prioritization: the framework cannot develop everywhere at once, so the room decides where it goes next.',
+    device:'Your phone. Select your top two.',
+    submit:'Exactly two priorities.',
+    anon:'Anonymous. Only the group ranking appears.',
+    answer:'No correct answer. This is a genuine input into what gets developed next.',
+    time:'Three minutes.',
+    after:'The ranked result appears on screen and is carried out of this session as input.',
+    ready:'Be ready to make the case for your first choice in one sentence.'
+  },
+  'confidence-close': {
+    why:'Compares the room’s confidence now against the same question asked at the start.',
+    device:'Your phone. One tap.',
+    submit:'One confidence rating.',
+    anon:'Anonymous. Only the distribution is shown, alongside the opening result.',
+    answer:'No correct answer.',
+    time:'One minute.',
+    after:'Both distributions appear side by side so the room can see the shift.',
+    ready:'Be ready to say what specifically moved you, if anything did.'
+  },
+  'reflection': {
+    why:'Closes the session on a commitment rather than a summary.',
+    device:'Your phone. One written answer.',
+    submit:'One sentence, in your own words.',
+    anon:'Anonymous. Shown on screen without any name, and only if the facilitator chooses to show them.',
+    answer:'No correct answer and no scoring.',
+    time:'Three minutes.',
+    after:'The facilitators may display responses anonymously to close the session.',
+    ready:'Nothing further. This is the last thing we ask of you.'
+  }
+};
+
 /* ------------------------------------------------------------- steps */
 const STEPS = [];
-const S = (o) => { STEPS.push(o); return o; };
+/* Attaching instructions here rather than in each literal guarantees that every
+   interactive scene carries them, including any added later. */
+const S = (o) => {
+  if(!o.instruct && INSTRUCT[o.id]) o.instruct = INSTRUCT[o.id];
+  STEPS.push(o);
+  return o;
+};
 
 /* ============================ CHAPTER 0 — WELCOME ======================= */
 

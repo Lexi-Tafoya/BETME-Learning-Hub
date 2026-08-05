@@ -216,7 +216,7 @@ Files changed: `server.js`, `live.js`, `index.html`, `join.html`,
 |---|---|
 | Auto-claim only from loopback; a hosted session required `FAC_KEY` | The first device to open `/presenter` is the presenter, anywhere. A refresh keeps it. |
 | A second console showed a banner but still had live controls sitting there | A second console is genuinely read-only: it mirrors the presenter like `/display`, its Live controls are hidden, and `onStage` is short-circuited so it cannot drive. |
-| No way to hand the session over | **Transfer control** in Live controls. It rotates the key, which revokes the current console at the same moment it frees the claim — so a hand-off cannot leave two devices driving the room. |
+| No way to hand the session over | Deliberately still none from inside the presentation, as of v3.4 — mid-workshop transfer was removed because it could leave two consoles both believing they drove the room. The claim is released only by the **Administrative reset** on the server landing page, or a restart. |
 | `FAC_KEY` documented as a required hardening step for hosting | Removed from the facilitator's path entirely. Still readable as an initial value; no longer needed, mentioned, or honoured after a transfer. |
 
 `?key=` still works and is harmless, but nothing asks for it and nothing prints

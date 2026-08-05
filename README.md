@@ -36,7 +36,7 @@ entry.
 **No key, no token, no setup.** Open `/presenter` and you are the presenter; a refresh
 keeps it. Anyone who opens it after that gets a read-only view that follows you with its
 controls hidden, and is told another facilitator is already presenting. The console only
-moves when you press **Transfer control**, which revokes your own session as it frees the
+cannot be moved from inside the presentation. If the console laptop becomes unavailable, release the
 claim — so a hand-off can never leave two people driving the room. That one-console rule
 is the whole protection model, including on a public URL.
 

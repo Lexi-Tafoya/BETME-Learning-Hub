@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>FACILITATOR ONLY &middot; Jordan Rating Sheet &middot; TMR</title>
+<!--
+  ============================================================================
+  FACILITATOR ONLY — DO NOT PROJECT, DO NOT DISTRIBUTE
+  Master Electronics | INTERNAL
+
+  For Autumn and Lexi. Print one copy each before the workshop.
+
+  This sheet is deliberately NOT linked from the presentation, /presenter,
+  /display or /join. There is no route to it from any screen a participant can
+  see, and it is not part of the scene sequence — the only way to reach it is by
+  typing the address. That is the whole point: two of the ratings below are
+  meant to be wrong, and if a participant reads this page in advance the
+  calibration challenge stops working.
+
+  Jordan is FICTIONAL. Nothing here describes a real employee.
+  ============================================================================
+-->
+<style>
+  :root{
+    --ink:#14181F; --ink-2:#3C4552; --ink-3:#6B7480; --line:#D6DAE0;
+    --weak:#B4331F; --weak-bg:#FDF1EF; --strong:#1C6B45; --strong-bg:#EFF7F2;
+    --warn-bg:#FDF8EC; --warn:#8A6512;
+    --sans:"Segoe UI",Aptos,system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --serif:"Aptos Serif",Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:34px 40px 60px; background:#F4F5F7; color:var(--ink);
+    font:400 12.4pt/1.5 var(--sans); max-width:960px; margin-inline:auto;
+  }
+  .stamp{
+    border:2px solid var(--weak); background:var(--weak-bg); color:var(--weak);
+    border-radius:8px; padding:12px 16px; margin:0 0 22px;
+    font:700 11pt/1.4 var(--sans); letter-spacing:.02em;
+  }
+  .stamp b{display:block; font-size:13pt; letter-spacing:.08em; margin:0 0 4px}
+  h1{font:700 24pt/1.15 var(--serif); margin:0 0 6px; letter-spacing:-.01em}
+  .sub{margin:0 0 4px; color:var(--ink-2); font-size:11.5pt}
+  .meta{margin:0 0 26px; color:var(--ink-3); font-size:10pt}
+  h2{
+    font:700 9.5pt/1 var(--sans); letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-3); margin:30px 0 12px; padding-bottom:7px;
+    border-bottom:1px solid var(--line);
+  }
+  h3{font:700 13pt/1.3 var(--sans); margin:0 0 6px}
+  p{margin:0 0 10px}
+  ul{margin:0 0 10px; padding-left:20px}
+  li{margin:0 0 5px}
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px 20px;
+    margin:0 0 14px; page-break-inside:avoid; break-inside:avoid;
+  }
+  .card.flag{border-color:var(--weak); border-left-width:5px; background:var(--weak-bg)}
+  .card.ok{border-color:var(--strong); border-left-width:5px; background:var(--strong-bg)}
+  .rowtop{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:0 0 12px}
+  .rate{
+    font:700 11pt/1 var(--sans); padding:6px 11px; border-radius:99px; white-space:nowrap;
+    border:1.5px solid currentColor;
+  }
+  .rate.f{color:var(--weak)} .rate.g{color:var(--strong)}
+  .tagline{
+    display:inline-block; font:700 8.5pt/1 var(--sans); letter-spacing:.13em;
+    text-transform:uppercase; padding:5px 9px; border-radius:4px; margin:0 0 10px;
+  }
+  .tagline.f{background:var(--weak); color:#fff}
+  .tagline.g{background:var(--strong); color:#fff}
+  dl{margin:0}
+  dt{
+    font:700 8.5pt/1 var(--sans); letter-spacing:.13em; text-transform:uppercase;
+    color:var(--ink-3); margin:14px 0 5px;
+  }
+  dd{margin:0}
+  .say{
+    font-family:var(--serif); font-size:12.6pt; font-style:italic; color:var(--ink);
+    border-left:3px solid var(--line); padding:2px 0 2px 14px; margin:0;
+  }
+  .ask{margin:0; padding-left:20px}
+  .ask li{font-family:var(--serif); font-style:italic; font-size:12.2pt}
+  .anchor{
+    background:var(--warn-bg); border:1px solid rgba(138,101,18,.3); border-radius:7px;
+    padding:10px 13px; margin:0 0 12px; font-size:11.5pt; color:var(--warn);
+  }
+  table{width:100%; border-collapse:collapse; margin:0 0 14px; font-size:11pt}
+  th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top}
+  th{background:#EDEFF2; font:700 9pt/1.2 var(--sans); letter-spacing:.09em;
+     text-transform:uppercase; color:var(--ink-2)}
+  .noprint{margin:26px 0 0}
+  .btn{
+    font:600 11pt/1 var(--sans); padding:11px 18px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--ink); background:var(--ink); color:#fff;
+  }
+  @media print{
+    body{background:#fff; padding:0; font-size:10.5pt; max-width:none}
+    .noprint{display:none}
+    .stamp{border-width:2px}
+    h2{margin-top:20px}
+    .card{box-shadow:none}
+    @page{margin:14mm}
+  }
+</style>
+</head>
+<body>
+
+<div class="stamp">
+  <b>FACILITATOR ONLY &mdash; DO NOT PROJECT OR DISTRIBUTE</b>
+  Autumn and Lexi only. Two of the four ratings below are <strong>deliberately weak</strong>. Do not
+  show this sheet to participants, do not leave it on a table, and do not open it on the console
+  while the display is mirroring. Jordan is fictional.
+</div>
+
+<h1>Jordan &mdash; facilitator rating sheet</h1>
+<p class="sub">For the calibration challenge in the Jordan results scene. Print one copy each.</p>
+<p class="meta">Master Electronics &middot; Business Enablement &middot; INTERNAL &middot;
+  Building the Future of Talent</p>
+
+<h2>How this section runs</h2>
+<div class="card">
+  <p><strong>1.</strong> Pairs submit. Distributions go up on screen. Work them one competency at a
+  time and draw out what evidence drove the spread.</p>
+  <p><strong>2.</strong> Reveal the written responses &mdash; evidence, then missing evidence, then
+  business cases. Read a few aloud.</p>
+  <p><strong>3.</strong> Then present <em>your</em> ratings from this sheet, with the weak rationale
+  exactly as written. Say the rationale with a straight face and reasonable confidence. Do not
+  signal which ones are the plants.</p>
+  <p><strong>4.</strong> The screen has already told the room to challenge you. When someone does,
+  ask them the two questions, every time:</p>
+  <ul class="ask">
+    <li>&ldquo;What evidence supports your rating?&rdquo;</li>
+    <li>&ldquo;What is your business case?&rdquo;</li>
+  </ul>
+  <p style="margin:10px 0 0"><strong>5.</strong> Concede when their evidence is genuinely better.
+  A facilitator visibly changing their mind because someone produced better evidence teaches more
+  than any slide in this deck.</p>
+</div>
+
+<div class="card" style="background:var(--warn-bg);border-color:rgba(138,101,18,.35)">
+  <h3 style="color:var(--warn)">This is not a trick exercise</h3>
+  <p style="margin:0">The point is not to catch the room out. It is to model what a real calibration
+  challenge sounds like &mdash; specific, evidence-led, and unembarrassing for everyone involved.
+  If nobody challenges you, prompt them. Never let an unsupported rating stand just because the room
+  is being polite.</p>
+</div>
+
+<h2>Rating 1 &middot; Accountable to Results</h2>
+<div class="card ok">
+  <span class="tagline g">Defensible</span>
+  <div class="rowtop"><h3>Accountable to Results</h3>
+    <span class="rate g">Autumn rates this 3 &mdash; Expert</span></div>
+  <div class="anchor"><strong>On record:</strong> &ldquo;Consistently hits project deadlines even
+    when scope changes mid-stream.&rdquo;</div>
+  <dl>
+    <dt>Rationale you present</dt>
+    <dd><p class="say">&ldquo;Four projects delivered against revised deadlines after scope changed,
+    no missed customer commitments, and she took the ERP migration over mid-flight and still landed
+    every re-baselined date. That is sustained strong results under changing conditions, and I am
+    comfortable at a 3.&rdquo;</p></dd>
+
+    <dt>Where this one is genuinely arguable</dt>
+    <dd><p>A 3 requires teaching or coaching others in the competency, and the evidence for that is
+    in Development of Others, not here. A room that argues this down to a 2 has a real point. Both 2
+    and 3 are defensible &mdash; let the argument happen and say so.</p></dd>
+
+    <dt>If challenged</dt>
+    <dd><p>Concede the structure of the argument: &ldquo;That is fair &mdash; the sustained results
+    are strong, and whether that alone gets to a 3 depends on how strictly we read the teaching
+    element. What would you need to see to be comfortable either way?&rdquo;</p></dd>
+
+    <dt>Push back with</dt>
+    <dd><ul class="ask">
+      <li>&ldquo;Is delivering under two re-baselines the same standard as delivering on a stable
+        plan? Should it be?&rdquo;</li>
+      <li>&ldquo;What evidence would move you from a 2 to a 3 here?&rdquo;</li>
+    </ul></dd>
+  </dl>
+</div>
+
+<h2>Rating 2 &middot; Data Literacy &mdash; PLANTED</h2>
+<div class="card flag">
+  <span class="tagline f">Deliberately weak &mdash; expect a challenge</span>
+  <div class="rowtop"><h3>Data Literacy</h3>
+    <span class="rate f">Autumn rates this 4 &mdash; Specialist</span></div>
+  <div class="anchor"><strong>On record:</strong> &ldquo;Builds her own status dashboards but rarely
+    digs into root-cause trends.&rdquo;</div>
+  <dl>
+    <dt>Weak rationale you present, as written</dt>
+    <dd><p class="say">&ldquo;She built her own dashboards from scratch when the standard reporting
+    pack did not do the job. Our Finance sponsor says hers is the only reporting he does not have to
+    interpret. Building your own tooling and having the business rely on it &mdash; that is a
+    Specialist to me.&rdquo;</p></dd>
+
+    <dt>Why it is wrong</dt>
+    <dd><ul>
+      <li>Level 4 requires finding <strong>root causes</strong> and driving lasting improvement. The
+        anchor sentence says explicitly that she <em>rarely</em> digs into root-cause trends.</li>
+      <li>She was asked for a trend view of the recurring defects and did not produce one.</li>
+      <li>A recurring data-quality issue surfaced twice last quarter. She escalated accurately and
+        worked around it. She never investigated why it kept happening.</li>
+      <li>Building a tool for your own reporting is not the same as improving the system others
+        depend on. This is 2, arguably 3 on a generous read of the dashboards. It is not 4.</li>
+    </ul></dd>
+
+    <dt>Concede with</dt>
+    <dd><p class="say">&ldquo;You are right, and I talked myself into that one. I anchored on the
+    thing she built and skipped straight past the sentence that says she does not chase root cause.
+    That is a halo off one strong artefact. Two, and I would want to see her work one recurring
+    defect to root cause before I moved it.&rdquo;</p></dd>
+
+    <dt>Push back first, before conceding</dt>
+    <dd><ul class="ask">
+      <li>&ldquo;The Finance sponsor relies on her reporting. Is that not lasting improvement?&rdquo;</li>
+      <li>&ldquo;What evidence supports your rating?&rdquo;</li>
+    </ul></dd>
+
+    <dt>If nobody challenges it</dt>
+    <dd><p>Prompt directly: &ldquo;Nobody is going to question a 4 on Data Literacy? Read the
+    sentence on the screen again.&rdquo;</p></dd>
+  </dl>
+</div>
+
+<h2>Rating 3 &middot; Development of Others &mdash; PLANTED</h2>
+<div class="card flag">
+  <span class="tagline f">Deliberately weak &mdash; expect a challenge</span>
+  <div class="rowtop"><h3>Development of Others</h3>
+    <span class="rate f">Lexi rates this 1 &mdash; Basic</span></div>
+  <div class="anchor"><strong>On record:</strong> &ldquo;Has begun coaching two junior Project
+    Managers informally, without being asked.&rdquo;</div>
+  <dl>
+    <dt>Weak rationale you present, as written</dt>
+    <dd><p class="say">&ldquo;It is informal. She has no direct reports, no formal leadership
+    responsibility, and it has only been going about six months. I feel she is a strong leader, and
+    people say the junior PMs go to her &mdash; but until it is part of her actual job I cannot
+    credit it above a 1.&rdquo;</p></dd>
+
+    <dt>Why it is wrong</dt>
+    <dd><ul>
+      <li>The rationale rests on two impressions &mdash; &ldquo;I feel&rdquo; and &ldquo;people
+        say&rdquo; &mdash; while ignoring the concrete evidence sitting next to them. Name that out
+        loud when you concede.</li>
+      <li>There is an observable outcome: both coached PMs now lead their own weekly status reviews
+        independently. Someone else's changed capability is the strongest evidence this competency
+        has.</li>
+      <li>One of them said she sat with him through two status cycles until he could run it himself,
+        and never once did it for him. That is coaching, described behaviourally.</li>
+      <li>&ldquo;Informal&rdquo; and &ldquo;not in the job description&rdquo; are not levels on the
+        scale. The scale measures observed behaviour, not job architecture.</li>
+      <li>Level 3 is where coaching and teaching others begins. This is genuinely on the 2/3
+        boundary &mdash; and 1 is indefensible.</li>
+    </ul></dd>
+
+    <dt>Concede with</dt>
+    <dd><p class="say">&ldquo;That is a better reading than mine. I rated the job description instead
+    of the behaviour, and I leaned on two sentences that are not evidence at all. There is a real
+    argument between 2 and 3 here &mdash; six months and two people, observed by one leader. What I
+    would want before finalising is what the coached PMs' own leaders have seen. But it is not a
+    1.&rdquo;</p></dd>
+
+    <dt>Push back first, before conceding</dt>
+    <dd><ul class="ask">
+      <li>&ldquo;It has been six months and one leader has observed it. Is that a pattern
+        yet?&rdquo;</li>
+      <li>&ldquo;What is your business case for a 3 rather than a 2?&rdquo;</li>
+    </ul></dd>
+
+    <dt>If nobody challenges it</dt>
+    <dd><p>Prompt: &ldquo;Two junior PMs now run their own status reviews because of her. Is that
+    really a 1?&rdquo;</p></dd>
+  </dl>
+</div>
+
+<h2>Rating 4 &middot; Strategic Awareness</h2>
+<div class="card ok">
+  <span class="tagline g">Defensible</span>
+  <div class="rowtop"><h3>Strategic Awareness</h3>
+    <span class="rate g">Lexi rates this 1 &mdash; Basic</span></div>
+  <div class="anchor"><strong>On record:</strong> &ldquo;Focuses on her own projects and has not yet
+    consistently connected the work to broader department goals.&rdquo;</div>
+  <dl>
+    <dt>Rationale you present</dt>
+    <dd><p class="say">&ldquo;She understands how her work connects to her team's goals &mdash; that
+    is Level 1, and Level 1 already means independent, capable work in routine situations. She was in
+    the Operations planning sessions twice and answered everything asked about her projects. What she
+    did not do, either time, was raise what any of it meant for the wider roadmap. That is the gap,
+    and it is honestly described.&rdquo;</p></dd>
+
+    <dt>The challenge to expect</dt>
+    <dd><p>Someone will argue that being invited to cross-functional planning at all is evidence of
+    Level 2. Take it seriously: attendance is exposure, not awareness. Ask what she <em>did</em> in
+    the room.</p></dd>
+
+    <dt>Hold this one</dt>
+    <dd><p>Do not concede without better evidence, and say why: &ldquo;Being in the room is
+    development, not evidence. If someone can point me at an instance of her connecting delivery work
+    upward to department goals, I will move it. I do not have one.&rdquo; Then add the honest second
+    half &mdash; nobody has asked her to, which is a gap in her <em>leader's</em> behaviour, not
+    hers.</p></dd>
+
+    <dt>Push back with</dt>
+    <dd><ul class="ask">
+      <li>&ldquo;What did she actually do in that planning session that shows strategic
+        awareness?&rdquo;</li>
+      <li>&ldquo;Has anyone ever asked her to connect her work to the department roadmap? Should
+        that change how we read this?&rdquo;</li>
+    </ul></dd>
+  </dl>
+</div>
+
+<h2>Classification and readiness &mdash; what to present</h2>
+<table>
+  <tr><th style="width:30%">Question</th><th style="width:22%">Present this</th>
+    <th>What to say, and where to leave it</th></tr>
+  <tr>
+    <td><strong>Proposed classification</strong></td>
+    <td>Autumn: HiPo<br>Lexi: Not enough information</td>
+    <td>Disagree with each other <em>on purpose</em>, in front of the room. Autumn argues the
+      delivery record and unprompted coaching. Lexi argues that Development of Others is unresolved
+      and that willingness has never been discussed with Jordan at all. Do not resolve it.</td>
+  </tr>
+  <tr>
+    <td><strong>Ready within ~12 months?</strong></td>
+    <td>Both: Not enough information</td>
+    <td>Agree here, and say why plainly: no formal leadership experience, no evidence of how she
+      performs when accountable for someone else's results, and nobody has asked her whether she
+      wants the seat. Willingness is part of the HiPo definition and we have zero evidence on it.</td>
+  </tr>
+  <tr>
+    <td><strong>First recommended action</strong></td>
+    <td>Both: gather the missing evidence</td>
+    <td>Ask the coached PMs' leaders what they have observed; give Jordan one recurring defect to
+      work to root cause; have the career-interest conversation. Then classify. This models
+      &ldquo;gather more&rdquo; as a legitimate calibration outcome.</td>
+  </tr>
+</table>
+
+<h2>When to concede, when to hold</h2>
+<div class="card">
+  <p><strong>Concede when</strong> the participant cites specific evidence from the case that you
+  did not weigh, names the level definition correctly, or catches you leaning on an impression.
+  Say what you got wrong and why &mdash; recency, halo, rating the job description instead of the
+  behaviour. Naming your own bias out loud is the most valuable thirty seconds in this section.</p>
+  <p><strong>Hold when</strong> the challenge is an assertion rather than evidence &mdash;
+  &ldquo;she seems ready,&rdquo; &ldquo;I would give her the benefit of the doubt,&rdquo; &ldquo;she
+  was in the room.&rdquo; Ask for the evidence. If it is not there, say so kindly and move on.</p>
+  <p><strong>Ask for more evidence when</strong> the room splits and neither side is wrong. That is
+  the honest calibration outcome and you should let the section end there rather than manufacturing
+  agreement. &ldquo;We would not finalise this today&rdquo; is a legitimate ending.</p>
+  <p style="margin:0"><strong>Never</strong> force a single final classification, and never let the
+  room leave believing there was a hidden right answer they failed to find.</p>
+</div>
+
+<h2>One-line reminders</h2>
+<div class="card">
+  <ul style="margin:0">
+    <li>Jordan is <strong>she/her</strong>. Stay consistent &mdash; the room notices.</li>
+    <li>Jordan is fictional. Say it once at the start of the case and do not repeat it.</li>
+    <li>Two ratings are planted: <strong>Data Literacy 4</strong> and
+      <strong>Development of Others 1</strong>.</li>
+    <li>Ask both questions every time: what evidence, and what business case.</li>
+    <li>If a written response from the room names a real person, skip it and say why.</li>
+    <li>Do not open this sheet on the presenter laptop while the display is mirroring.</li>
+  </ul>
+</div>
+
+<div class="noprint">
+  <button class="btn" type="button" onclick="window.print()">Print this sheet</button>
+</div>
+
+</body>
+</html>

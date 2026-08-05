@@ -93,7 +93,7 @@ The protection on a public URL is that **only one console is live at a time.**
 Whoever opens `/presenter` first holds it. Everyone arriving after that gets a
 read-only view that follows the presenter with its controls hidden, and is told
 that another facilitator is already presenting. The only way the console moves is
-the current facilitator pressing **Transfer control** in Live controls, which
+the **Administrative reset** on the server landing page, which
 frees the claim and revokes their own session in the same action, so a hand-off
 can never leave two people driving the room.
 
