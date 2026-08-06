@@ -1,20 +1,57 @@
-# Nothing to install, so nothing to ignore there — but just in case.
-node_modules/
-*.log
+# ============================================================================
+#  Building the Future of Talent — static presentation
+#
+#  The repository is deliberately four things: index.html, style.css,
+#  script.js and assets/. Everything below is the retired live-workshop
+#  application. It is excluded rather than deleted so nothing is lost from this
+#  machine, and so GitHub Pages never serves it.
+#
+#  All of it remains in git history at commit 98c0395 if it is ever wanted
+#  again.
+# ============================================================================
 
-# Local packages and backups live in the parent working folder, not in git.
-*.zip
-_backups/
+# retired Node server and live-session layer
+server.js
+package.json
+package-lock.json
+Procfile
+render.yaml
+live.js
+qr.js
+make-qr.py
 
-# Generated print artwork. Rebuild with:  python make-qr.py <url>
-# Kept out of git for two reasons: the QR a session actually uses is drawn by the
-# server at /qr and is not a file, and these encode whichever address the laptop
-# had when they were generated — no reason to publish an internal one.
-assets/join-qr.svg
+# retired multi-screen application
+app.js
+content-a.js
+content-b.js
+stage.css
+join.html
+join.js
+facilitator-rating-sheet.html
+
+# retired tooling and the local copy of the old build
+archive/
+tools/test-live.js
+tools/browser-test.html
+tools/check-server.js
+tools/qr-dump.js
+tools/verify-qr.py
+
+# retired helper scripts and working notes
+PUSH TO GITHUB.bat
+FINAL-PASS-v3.4.md
+CHANGES-v3.md
+HANDOFF.md
+HOSTING.md
+START HERE.txt
+
+# generated join QR artefacts from the old live sessions
 assets/join-qr.png
+assets/join-qr.svg
 assets/join-qr-card.png
 
 # OS noise
+.DS_Store
 Thumbs.db
 desktop.ini
-.DS_Store
+node_modules/
