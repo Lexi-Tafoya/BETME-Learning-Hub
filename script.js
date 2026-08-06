@@ -189,7 +189,7 @@ const SLIDES = [
   /* 7 ------------------------------------------------------------------- */
   {
     kind: 'scale',
-    nav: 'Competencies &amp; scale',
+    nav: 'Competencies & scale',
     eyebrow: 'The competency framework',
     title: 'A shared language, and how it is rated',
     lead: 'Behavioral competencies provide a common language across the business, while '
@@ -213,7 +213,7 @@ const SLIDES = [
   /* 8 ------------------------------------------------------------------- */
   {
     kind: 'evidence',
-    nav: 'Evidence &amp; bias',
+    nav: 'Evidence & bias',
     eyebrow: 'Observable evidence',
     title: 'Evidence, not impressions',
     lead: 'A rating is only as strong as the evidence behind it.',
@@ -241,7 +241,7 @@ const SLIDES = [
   /* 9 ------------------------------------------------------------------- */
   {
     kind: 'steps',
-    nav: 'Preparation &amp; calibration',
+    nav: 'Preparation & calibration',
     eyebrow: 'Before the conversation',
     title: 'Preparation, then calibration',
     lead: 'Effective TMR conversations begin long before the meeting.',
